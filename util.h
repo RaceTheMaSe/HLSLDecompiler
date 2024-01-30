@@ -12,6 +12,7 @@
 #include <D3Dcompiler.h>
 #include <d3d9.h>
 #include <DirectXMath.h>
+#include <wrl/client.h>
 
 #include "version.h"
 #include "log.h"
@@ -58,6 +59,10 @@ const int INI_PARAMS_SIZE_WARNING = 256;
 // The actual variable definition is in the DX11 project to remind anyone using
 // this from another project that they need to InitializeCriticalSection[Pretty]
 extern CRITICAL_SECTION resource_creation_mode_lock;
+
+// Microsoft component object model alias
+template <typename T>
+using MSComPtr = Microsoft::WRL::ComPtr<T>;
 
 // Use the pretty lock debugging version if lock.h is included first, otherwise
 // use the regular EnterCriticalSection:

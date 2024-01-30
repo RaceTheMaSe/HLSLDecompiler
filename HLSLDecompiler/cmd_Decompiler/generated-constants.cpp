@@ -1,7 +1,7 @@
 #define POLY 0x82f63b78
 #define LONG_SHIFT 8192
 #define SHORT_SHIFT 256
-#include <stdint.h>
+#include <cstdint>
 
 static uint32_t table[16][256] =
 {

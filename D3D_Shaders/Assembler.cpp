@@ -2520,7 +2520,7 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 	return ret;
 }
 
-vector<string> stringToLines(const char* start, size_t size)
+std::vector<std::string> stringToLines(const char* start, size_t size)
 {
 	vector<string> lines;
 	const char* pStart = start;
@@ -2890,7 +2890,7 @@ HRESULT disassemblerDX9(vector<byte> *buffer, vector<byte> *ret, const char *com
 }
 #endif
 
-HRESULT disassembler(vector<byte> *buffer, vector<byte> *ret, const char *comment,
+HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const char *comment,
 		int hexdump, bool d3dcompiler_46_compat,
 		bool disassemble_undecipherable_data,
 		bool patch_cb_offsets)
@@ -3220,8 +3220,8 @@ static vector<DWORD> ComputeHash(byte const* input, DWORD size)
 
 // origByteCode is modified in this function, so passing it by value!
 // asmFile is not modified, so passing it by pointer -DarkStarSword
-vector<byte> assembler(vector<char> *asmFile, vector<byte> origBytecode,
-		vector<AssemblerParseError> *parse_errors)
+std::vector<byte> assembler(std::vector<char> *asmFile, std::vector<byte> origBytecode,
+		std::vector<AssemblerParseError> *parse_errors)
 {
 	byte fourcc[4];
 	DWORD fHash[4];

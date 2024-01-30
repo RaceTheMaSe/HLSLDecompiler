@@ -3,7 +3,7 @@
 
 #include "hlslcc.h"
 
-typedef enum
+enum SHADER_TYPE
 {
     INVALID_SHADER = -1,
     PIXEL_SHADER,
@@ -12,7 +12,7 @@ typedef enum
     HULL_SHADER,
     DOMAIN_SHADER,
     COMPUTE_SHADER,
-} SHADER_TYPE;
+};
 
 static SHADER_TYPE DecodeShaderType(uint32_t ui32Token)
 {

@@ -7,26 +7,24 @@
 
 #include "targetver.h"
 
-#include <stdio.h>
+#include <cstdio>
 #include <tchar.h>
-#include "stdint.h"
-#include "D3DCompiler.h"
+#include <cstdint>
+#include <D3DCompiler.h>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <stdexcept>
 
-using namespace std;
-
 // VS2013 BUG WORKAROUND: Make sure this class has a unique type name!
-class AssemblerParseError: public exception {
+class AssemblerParseError: public std::exception {
 public:
-	string context, desc, msg;
+	std::string context, desc, msg;
 	int line_no;
 
-	AssemblerParseError(string context, string desc) :
-		context(context),
-		desc(desc),
+	AssemblerParseError(std::string context_, std::string desc_) :
+		context(std::move(context_)),
+		desc(std::move(desc_)),
 		line_no(0)
 	{
 		update_msg();
@@ -36,11 +34,11 @@ public:
 	{
 		msg = "Assembly parse error";
 		if (line_no > 0)
-			msg += string(" on line ") + to_string(line_no);
+			msg += std::string(" on line ") + std::to_string(line_no);
 		msg += ", " + desc + ":\n\"" + context + "\"";
 	}
 
-	const char* what() const
+	const char* what() const override
 	{
 		return msg.c_str();
 	}
@@ -84,14 +82,14 @@ struct token_operand
 	};
 };
 
-vector<string> stringToLines(const char* start, size_t size);
-HRESULT disassembler(vector<byte> *buffer, vector<byte> *ret, const char *comment,
+std::vector<std::string> stringToLines(const char* start, size_t size);
+HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const char *comment,
 		int hexdump = 0, bool d3dcompiler_46_compat = false,
 		bool disassemble_undecipherable_data = false,
 		bool patch_cb_offsets = false);
-HRESULT disassemblerDX9(vector<byte> *buffer, vector<byte> *ret, const char *comment);
-vector<byte> assembler(vector<char> *asmFile, vector<byte> origBytecode, vector<AssemblerParseError> *parse_errors = NULL);
-vector<byte> assemblerDX9(vector<char> *asmFile);
+HRESULT disassemblerDX9(std::vector<byte> *buffer, std::vector<byte> *ret, const char *comment);
+std::vector<byte> assembler(std::vector<char> *asmFile, std::vector<byte> origBytecode, std::vector<AssemblerParseError> *parse_errors = nullptr);
+std::vector<byte> assemblerDX9(std::vector<char> *asmFile);
 void writeLUT();
-HRESULT AssembleFluganWithSignatureParsing(vector<char> *assembly, vector<byte> *result_bytecode, vector<AssemblerParseError> *parse_errors = NULL);
-vector<byte> AssembleFluganWithOptionalSignatureParsing(vector<char> *assembly, bool assemble_signatures, vector<byte> *orig_bytecode, vector<AssemblerParseError> *parse_errors = NULL);
+HRESULT AssembleFluganWithSignatureParsing(std::vector<char> *assembly, std::vector<byte> *result_bytecode, std::vector<AssemblerParseError> *parse_errors = nullptr);
+std::vector<byte> AssembleFluganWithOptionalSignatureParsing(std::vector<char> *assembly, bool assemble_signatures, std::vector<byte> *orig_bytecode, std::vector<AssemblerParseError> *parse_errors = nullptr);

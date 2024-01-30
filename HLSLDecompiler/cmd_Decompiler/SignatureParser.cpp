@@ -1,7 +1,15 @@
 #include "stdafx.h"
-
+#include "util.h"
 #include "log.h"
 #include "shader.h"
+#include <winnt.h>
+#include <cstddef>
+#include <cstdio>
+#include <tchar.h>
+#include <cstdint>
+#include <D3DCompiler.h>
+#include <string>
+#include <vector>
 
 #define SFI_RAW_STRUCT_BUF (1LL<<1)
 #define SFI_MIN_PRECISION  (1LL<<4)

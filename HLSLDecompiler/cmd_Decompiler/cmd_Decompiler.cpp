@@ -14,7 +14,8 @@
                      // The DX9 decompiler is more interesting, which is unrelated to this flag.
 #include "util.h"
 #include "shader.h"
-#include "D3D_Shaders/stdafx.h"
+#include "stdafx.h"
+// #include "D3D_Shaders/stdafx.h"
 
 using namespace std;
 
@@ -103,8 +104,6 @@ static struct {
 void parse_args(int argc, char *argv[])
 {
 	bool terminated = false;
-	char *arg;
-	int i;
 
 	// I'd prefer to use an existing library for this (e.g. that allows
 	// these to be specified declaratively and handles --help, --usage,
@@ -114,8 +113,8 @@ void parse_args(int argc, char *argv[])
 	// fairly simple posix style option parsing that can later be expanded
 	// to use a full library
 
-	for (i = 1; i < argc; i++) {
-		arg = argv[i];
+	for (int i = 1; i < argc; i++) {
+		char* arg = argv[i];
 		if (!terminated && !strncmp(arg, "-", 1)) {
 			if (!strcmp(arg, "--help") || !strcmp(arg, "--usage")) {
 				PrintHelp(argc, argv); // Does not return
@@ -212,28 +211,29 @@ void parse_args(int argc, char *argv[])
 // to bug in MS's disassembler that always prints floats with %f, which does
 // not have sufficient precision to reproduce a 32bit floating point value
 // exactly. Might still be useful for comparison:
-static HRESULT DisassembleMS(const void *pShaderBytecode, size_t BytecodeLength, string *asmText)
+static HRESULT DisassembleMS(const void *pShaderBytecode, size_t BytecodeLength, std::string *asmText)
 {
-	ID3DBlob *disassembly = nullptr;
+	MSComPtr<ID3DBlob> disassembly = nullptr;
 	UINT flags = D3D_DISASM_ENABLE_DEFAULT_VALUE_PRINTS;
-	string comments = "//   using 3Dmigoto command line v" + string(VER_FILE_VERSION_STR) + " on " + LogTime() + "//\n";
+	std::string comments = "//   using 3Dmigoto command line v" + string(VER_FILE_VERSION_STR) + " on " + LogTime() + "//\n";
 
-	HRESULT hr = D3DDisassemble(pShaderBytecode, BytecodeLength, flags, comments.c_str(), &disassembly);
+	HRESULT hr = D3DDisassemble(pShaderBytecode, BytecodeLength, flags, comments.c_str(), disassembly.GetAddressOf());
 	if (FAILED(hr)) {
 		LogInfo("  disassembly failed. Error: %x\n", hr);
 		return hr;
 	}
 
+	LogInfo("\n*** Be careful of the precision issue of 32bit floating point value due to MS disassembler's bug!\n");
+
 	// Successfully disassembled into a Blob.  Let's turn it into a C++ std::string
 	// so that we don't have a null byte as a terminator.  If written to a file,
 	// the null bytes otherwise cause Git diffs to fail.
-	*asmText = string(static_cast<char*>(disassembly->GetBufferPointer()));
-
-	disassembly->Release();
+	*asmText = std::string(static_cast<char*>(disassembly->GetBufferPointer()));
+	
 	return S_OK;
 }
 
-static HRESULT DisassembleFlugan(const void *pShaderBytecode, size_t BytecodeLength, string *asmText,
+static HRESULT DisassembleFlugan(const void *pShaderBytecode, size_t BytecodeLength, std::string *asmText,
 		int hexdump, bool d3dcompiler_46_compat)
 {
 	// FIXME: This is a bit of a waste - we convert from a vector<char> to
@@ -250,10 +250,9 @@ static int validate_section(char section[4], unsigned char *old_section, unsigne
 {
 	unsigned char *p1 = old_section, *p2 = new_section;
 	int rc = 0;
-	size_t pos;
 	size_t off = (size_t)(old_section - (unsigned char*)old_dxbc);
 
-	for (pos = 0; pos < size; pos++, p1++, p2++) {
+	for (size_t pos = 0; pos < size; pos++, p1++, p2++) {
 		if (*p1 == *p2)
 			continue;
 
@@ -271,10 +270,10 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
 {
 	vector<char> assembly_vec(assembly->begin(), assembly->end());
 	vector<byte> new_shader;
-	struct dxbc_header *old_dxbc_header = NULL, *new_dxbc_header = NULL;
-	struct section_header *old_section_header = NULL, *new_section_header = NULL;
-	uint32_t *old_section_offset_ptr = NULL, *new_section_offset_ptr = NULL;
-	unsigned char *old_section = NULL, *new_section = NULL;
+	dxbc_header *old_dxbc_header = nullptr, *new_dxbc_header = nullptr;
+	section_header *old_section_header = nullptr, *new_section_header = nullptr;
+	uint32_t *old_section_offset_ptr = nullptr, *new_section_offset_ptr = nullptr;
+	unsigned char *old_section = nullptr, *new_section = nullptr;
 	uint32_t size;
 	unsigned i, j;
 	int rc = 0;
@@ -292,7 +291,7 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
 			return 1;
 		}
 	} catch (AssemblerParseError &e) {
-		string disassembly;
+		std::string disassembly;
 
 		LogInfo("\n%s\n\n", e.what());
 
@@ -305,8 +304,8 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
 	}
 
 	// Get some useful pointers into the buffers:
-	old_dxbc_header = (struct dxbc_header*)old_shader->data();
-	new_dxbc_header = (struct dxbc_header*)new_shader.data();
+	old_dxbc_header = (dxbc_header*)old_shader->data();
+	new_dxbc_header = (dxbc_header*)new_shader.data();
 
 	old_section_offset_ptr = (uint32_t*)((char*)old_dxbc_header + sizeof(struct dxbc_header));
 	for (i = 0; i < old_dxbc_header->num_sections; i++, old_section_offset_ptr++) {
@@ -401,17 +400,16 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
 }
 
 
-static HRESULT Decompile(const void *pShaderBytecode, size_t BytecodeLength, string *hlslText, string *shaderModel)
+static HRESULT Decompile(const void *pShaderBytecode, size_t BytecodeLength, std::string *hlslText, std::string *shaderModel)
 {
 	// Set all to zero, so we only init the ones we are using here:
-	ParseParameters p = {0};
+	ParseParameters p{};
 	DecompilerSettings d;
 	bool patched = false;
 	bool errorOccurred = false;
-	string disassembly;
-	HRESULT hret;
+	std::string disassembly;
 
-	hret = DisassembleMS(pShaderBytecode, BytecodeLength, &disassembly);
+	HRESULT hret = DisassembleMS(pShaderBytecode, BytecodeLength, &disassembly);
 	if (FAILED(hret))
 		return E_FAIL;
 
@@ -434,7 +432,7 @@ static HRESULT Decompile(const void *pShaderBytecode, size_t BytecodeLength, str
 	d.StereoParamsReg = -1;
 
 	*hlslText = DecompileBinaryHLSL(p, patched, *shaderModel, errorOccurred);
-	if (!hlslText->size() || errorOccurred) {
+	if (hlslText->empty() || errorOccurred) {
 		LogInfo("    error while decompiling\n");
 		return E_FAIL;
 	}
@@ -442,18 +440,14 @@ static HRESULT Decompile(const void *pShaderBytecode, size_t BytecodeLength, str
 	return S_OK;
 }
 
-static int validate_hlsl(string *hlsl, string *shaderModel)
+static int validate_hlsl(std::string *hlsl, std::string *shaderModel)
 {
-	ID3DBlob *ppBytecode = NULL;
-	ID3DBlob *pErrorMsgs = NULL;
-	HRESULT hr;
+	MSComPtr<ID3DBlob> ppBytecode = nullptr;
+	MSComPtr<ID3DBlob> pErrorMsgs = nullptr;
 
 	// Using optimisation level 0 for faster verification:
-	hr = D3DCompile(hlsl->c_str(), hlsl->size(), "wrapper1349", 0, D3D_COMPILE_STANDARD_FILE_INCLUDE,
-		"main", shaderModel->c_str(), D3DCOMPILE_OPTIMIZATION_LEVEL0, 0, &ppBytecode, &pErrorMsgs);
-
-	if (ppBytecode)
-		ppBytecode->Release();
+	HRESULT hr = D3DCompile(hlsl->c_str(), hlsl->size(), "wrapper1349", 0, D3D_COMPILE_STANDARD_FILE_INCLUDE,
+		"main", shaderModel->c_str(), D3DCOMPILE_OPTIMIZATION_LEVEL0, 0, ppBytecode.GetAddressOf(), pErrorMsgs.GetAddressOf());
 
 	if (pErrorMsgs && LogFile) { // Check LogFile so the fwrite doesn't crash
 		LPVOID errMsg = pErrorMsgs->GetBufferPointer();
@@ -461,7 +455,6 @@ static int validate_hlsl(string *hlsl, string *shaderModel)
 		LogInfo("--------------------------------------------- BEGIN ---------------------------------------------\n");
 		fwrite(errMsg, 1, errSize - 1, LogFile);
 		LogInfo("---------------------------------------------- END ----------------------------------------------\n");
-		pErrorMsgs->Release();
 	}
 
 	if (FAILED(hr)) {
@@ -477,25 +470,22 @@ static int validate_hlsl(string *hlsl, string *shaderModel)
 }
 
 template<typename T>
-static int ReadInput(vector<T> *srcData, string const *filename)
+static int ReadInput(std::vector<T> *srcData, std::string const *filename)
 {
-	DWORD srcDataSize;
 	DWORD readSize;
-	BOOL bret;
-	HANDLE fp;
 
 	// TODO: Handle reading from stdin for use in a pipeline
 
-	fp = CreateFileA(filename->c_str(), GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	HANDLE fp = CreateFileA(filename->c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 	if (fp == INVALID_HANDLE_VALUE) {
 		LogInfo("    Shader not found: %s\n", filename->c_str());
 		return EXIT_FAILURE;
 	}
 
-	srcDataSize = GetFileSize(fp, 0);
+	DWORD srcDataSize = GetFileSize(fp, 0);
 	srcData->resize(srcDataSize);
 
-	bret = ReadFile(fp, srcData->data(), srcDataSize, &readSize, 0);
+	BOOL bret = ReadFile(fp, srcData->data(), srcDataSize, &readSize, 0);
 	CloseHandle(fp);
 	if (!bret || srcDataSize != readSize) {
 		LogInfo("    Error reading input file\n");
@@ -505,9 +495,8 @@ static int ReadInput(vector<T> *srcData, string const *filename)
 	return EXIT_SUCCESS;
 }
 
-static int WriteOutput(string const *in_filename, char const *extension, string const *output)
+static int WriteOutput(std::string const *in_filename, char const *extension, std::string const *output)
 {
-	string out_filename;
 	FILE *fp;
 
 	// TODO: Use 3DMigoto style filenames when possible, but remember we
@@ -519,7 +508,7 @@ static int WriteOutput(string const *in_filename, char const *extension, string 
 
 	// Also handles the case where the file has no extension (well, unless
 	// some fool does foo.bar\baz):
-	out_filename = in_filename->substr(0, in_filename->rfind(".")) + extension;
+	std::string out_filename = in_filename->substr(0, in_filename->rfind(".")) + extension;
 	LogInfo("  -> %s\n", out_filename.c_str());
 
 	fopen_s(&fp, out_filename.c_str(), "wb");
@@ -532,12 +521,12 @@ static int WriteOutput(string const *in_filename, char const *extension, string 
 	return EXIT_SUCCESS;
 }
 
-static int process(string const *filename)
+static int process(std::string const *filename)
 {
 	HRESULT hret;
-	string output;
-	vector<char> srcData;
-	string model;
+	std::string output;
+	std::vector<char> srcData;
+	std::string model;
 
 	if (ReadInput(&srcData, filename))
 		return EXIT_FAILURE;
@@ -571,18 +560,17 @@ static int process(string const *filename)
 
 		if (WriteOutput(filename, ".asm", &output))
 			return EXIT_FAILURE;
-
 	}
 
 	if (args.assemble) {
 		LogInfo("Assembling %s...\n", filename->c_str());
-		vector<byte> new_bytecode;
+		std::vector<byte> new_bytecode;
 		if (args.reflection_reference.empty()) {
 			hret = AssembleFluganWithSignatureParsing(&srcData, &new_bytecode);
 			if (FAILED(hret))
 				return EXIT_FAILURE;
 		} else {
-			vector<byte> refData;
+			std::vector<byte> refData;
 			if (ReadInput(&refData, &args.reflection_reference))
 				return EXIT_FAILURE;
 			new_bytecode = AssembleFluganWithOptionalSignatureParsing(&srcData, false, &refData);
@@ -592,10 +580,10 @@ static int process(string const *filename)
 		// if (args.validate)
 		// disassemble again and perform fuzzy compare
 
-		output = string(new_bytecode.begin(), new_bytecode.end());
-		if (WriteOutput(filename, ".shdr", &output))
+		output = std::string(new_bytecode.begin(), new_bytecode.end());
+		LogInfo("Shader assembly bytes: %llu\n", output.size());
+		if (WriteOutput(filename, ".bin", &output))
 			return EXIT_FAILURE;
-
 	}
 
 	if (args.decompile) {
@@ -616,14 +604,14 @@ static int process(string const *filename)
 
 	if (args.decompile2) {
 		LogInfo("Decompiling %s...\n", filename->c_str());
-		vector<byte> new_bytecode;
+		std::vector<byte> new_bytecode;
 		if (args.reflection_reference.empty()) {
 			hret = AssembleFluganWithSignatureParsing(&srcData, &new_bytecode);
 			if (FAILED(hret))
 				return EXIT_FAILURE;
 		}
 		else {
-			vector<byte> refData;
+			std::vector<byte> refData;
 			if (ReadInput(&refData, &args.reflection_reference))
 				return EXIT_FAILURE;
 			new_bytecode = AssembleFluganWithOptionalSignatureParsing(&srcData, false, &refData);

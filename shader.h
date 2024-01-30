@@ -30,18 +30,18 @@ struct sgn_entry_common {
 
 struct sgn_entry_serialiased { // Base version - 24 bytes
 	uint32_t name_offset; // Relative to the start of sgn_header
-	struct sgn_entry_common common;
+	sgn_entry_common common;
 	// Followed by an unpadded array of null-terminated names
 	// Whole structure padded to a multiple of 4 bytes with 0xAB
 };
 
 struct sg5_entry_serialiased { // Version "5" (only exists for geometry shader outputs) - 28 bytes
 	uint32_t stream;
-	struct sgn_entry_serialiased sgn;
+	sgn_entry_serialiased sgn;
 };
 
 struct sg1_entry_serialiased { // "Version "1" (most recent - I assume that's 5.1?) - 32 bytes
-	struct sg5_entry_serialiased sg5;
+	sg5_entry_serialiased sg5;
 	uint32_t min_precision;
 };
 
@@ -49,6 +49,6 @@ struct sgn_entry_unserialised {
 	uint32_t stream;
 	string name;
 	uint32_t name_offset; // Relative to start of the name list
-	struct sgn_entry_common common;
+	sgn_entry_common common;
 	uint32_t min_precision;
 };
