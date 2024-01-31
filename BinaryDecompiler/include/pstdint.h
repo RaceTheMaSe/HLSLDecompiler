@@ -181,6 +181,7 @@
  *  John Dill
  *
  */
+#pragma once
 
 #include <stddef.h>
 #include <limits.h>

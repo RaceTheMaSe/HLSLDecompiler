@@ -1,8 +1,8 @@
-#include "internal_includes/tokens.h"
-#include "internal_includes/structs.h"
-#include "internal_includes/decode.h"
-#include "internal_includes/reflect.h"
-#include "internal_includes/debug.h"
+#include "tokens.h"
+#include "structs.h"
+#include "decode.h"
+#include "reflect.h"
+#include "debug.h"
 #include "log.h"
 
 #define FOURCC(a, b, c, d) ((uint32_t)(uint8_t)(a) | ((uint32_t)(uint8_t)(b) << 8) | ((uint32_t)(uint8_t)(c) << 16) | ((uint32_t)(uint8_t)(d) << 24 ))

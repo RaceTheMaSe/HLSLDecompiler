@@ -793,4 +793,4 @@ static RESINFO_RETURN_TYPE DecodeResInfoReturnType(uint32_t ui32Token)
     return (RESINFO_RETURN_TYPE)((ui32Token & 0x00001800) >> 11);
 }
 
-#include "tokensDX9.h"
+#include "tokens_dx9.h"

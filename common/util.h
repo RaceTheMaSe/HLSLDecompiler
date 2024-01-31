@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cctype>
-#include <cwchar>
+#include <ctype.h>
+#include <wchar.h>
 #include <string>
 #include <vector>
 #include <map>
@@ -16,10 +16,7 @@
 
 #include "version.h"
 #include "log.h"
-#include "crc32c.h"
 #include "util_min.h"
-
-#include "D3D_Shaders\stdafx.h"
 
 //#if MIGOTO_DX == 11
 //#include "DirectX11\HookedDevice.h"
@@ -92,21 +89,21 @@ using MSComPtr = Microsoft::WRL::ComPtr<T>;
 // Not changing shader hash calculation as there are thousands of shaders already
 // in the field, and there is no known bottleneck for that calculation.
 
-static uint32_t crc32c_hw(uint32_t seed, const void *buffer, size_t length)
-{
-	try
-	{
-		const uint8_t *cast_buffer = static_cast<const uint8_t*>(buffer);
+// static uint32_t crc32c_hw(uint32_t seed, const void *buffer, size_t length)
+// {
+// 	try
+// 	{
+// 		const uint8_t *cast_buffer = static_cast<const uint8_t*>(buffer);
 
-		return crc32c_append(seed, cast_buffer, length);
-	}
-	catch (...)
-	{
-		// Fatal error, but catch it and return null for hash.
-		LogInfo("   ******* Exception caught while calculating crc32c_hw hash ******\n");
-		return 0;
-	}
-}
+// 		return crc32c_append(seed, cast_buffer, length);
+// 	}
+// 	catch (...)
+// 	{
+// 		// Fatal error, but catch it and return null for hash.
+// 		LogInfo("   ******* Exception caught while calculating crc32c_hw hash ******\n");
+// 		return 0;
+// 	}
+// }
 
 
 // -----------------------------------------------------------------------------------------------
@@ -273,9 +270,9 @@ static T1 lookup_enum_name(struct EnumName_t<T1, T2> *enum_names, T2 val)
 }
 
 template <class T2>
-static wstring lookup_enum_bit_names(struct EnumName_t<const wchar_t*, T2> *enum_names, T2 val)
+static std::wstring lookup_enum_bit_names(struct EnumName_t<const wchar_t*, T2> *enum_names, T2 val)
 {
-	wstring ret;
+	std::wstring ret;
 	T2 remaining = val;
 
 	for (; enum_names->name; enum_names++) {
@@ -711,17 +708,17 @@ static UINT dxgi_format_size(DXGI_FORMAT format)
 // New version using Flugan's wrapper around D3DDisassemble to replace the
 // problematic %f floating point values with %.9e, which is enough that a 32bit
 // floating point value will be reproduced exactly:
-static string BinaryToAsmText(const void *pShaderBytecode, size_t BytecodeLength,
+static std::string BinaryToAsmText(const void *pShaderBytecode, size_t BytecodeLength,
 		bool patch_cb_offsets,
 		bool disassemble_undecipherable_data = true,
 		int hexdump = 0, bool d3dcompiler_46_compat = true)
 {
-	string comments;
-	vector<byte> byteCode(BytecodeLength);
-	vector<byte> disassembly;
+	std::string comments;
+	std::vector<byte> byteCode(BytecodeLength);
+	std::vector<byte> disassembly;
 	HRESULT r;
 
-	comments = "//   using 3Dmigoto v" + string(VER_FILE_VERSION_STR) + " on " + LogTime() + "//\n";
+	comments = "//   using 3Dmigoto v" + std::string(VER_FILE_VERSION_STR) + " on " + LogTime() + "//\n";
 	memcpy(byteCode.data(), pShaderBytecode, BytecodeLength);
 
 #if MIGOTO_DX == 9
@@ -735,7 +732,7 @@ static string BinaryToAsmText(const void *pShaderBytecode, size_t BytecodeLength
 		return "";
 	}
 
-	return string(disassembly.begin(), disassembly.end());
+	return std::string{ disassembly.begin(), disassembly.end() };
 }
 
 // Get the shader model from the binary shader bytecode.
@@ -789,9 +786,9 @@ static string BinaryToAsmText(const void *pShaderBytecode, size_t BytecodeLength
 //	return shaderModel;
 //}
 
-static string GetShaderModel(const void *pShaderBytecode, size_t bytecodeLength)
+static std::string GetShaderModel(const void *pShaderBytecode, size_t bytecodeLength)
 {
-	string asmText = BinaryToAsmText(pShaderBytecode, bytecodeLength, false);
+	std::string asmText = BinaryToAsmText(pShaderBytecode, bytecodeLength, false);
 	if (asmText.empty())
 		return "";
 
@@ -806,7 +803,7 @@ static string GetShaderModel(const void *pShaderBytecode, size_t bytecodeLength)
 	// Extract model.
 	char *eol = pos;
 	while (eol[0] != 0x0a && pos < end) eol++;
-	string shaderModel(pos, eol);
+	std::string shaderModel(pos, eol);
 
 	return shaderModel;
 }
@@ -819,7 +816,7 @@ static string GetShaderModel(const void *pShaderBytecode, size_t bytecodeLength)
 // We previously would overwrite the file only after checking if the contents were different,
 // this relaxes that to just being same file name.
 
-static HRESULT CreateTextFile(wchar_t *fullPath, string *asmText, bool overwrite)
+static HRESULT CreateTextFile(wchar_t *fullPath, std::string *asmText, bool overwrite)
 {
 	FILE *f;
 
@@ -852,7 +849,7 @@ static HRESULT CreateTextFile(wchar_t *fullPath, string *asmText, bool overwrite
 static HRESULT CreateAsmTextFile(wchar_t* fileDirectory, UINT64 hash, const wchar_t* shaderType, 
 	const void *pShaderBytecode, size_t bytecodeLength, bool patch_cb_offsets)
 {
-	string asmText = BinaryToAsmText(pShaderBytecode, bytecodeLength, patch_cb_offsets);
+	std::string asmText = BinaryToAsmText(pShaderBytecode, bytecodeLength, patch_cb_offsets);
 	if (asmText.empty())
 	{
 		return E_OUTOFMEMORY;
@@ -873,7 +870,7 @@ static HRESULT CreateAsmTextFile(wchar_t* fileDirectory, UINT64 hash, const wcha
 
 // Specific variant to name files, so we know they are HLSL text.
 
-static HRESULT CreateHLSLTextFile(UINT64 hash, string hlslText)
+static HRESULT CreateHLSLTextFile(UINT64 hash, std::string hlslText)
 {
 
 }

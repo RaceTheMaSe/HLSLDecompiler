@@ -1,6 +1,6 @@
-#include "internal_includes/reflect.h"
-#include "internal_includes/debug.h"
-#include "internal_includes/decode.h"
+#include "reflect.h"
+#include "debug.h"
+#include "decode.h"
 #include <cstdlib>
 #include <string>
 

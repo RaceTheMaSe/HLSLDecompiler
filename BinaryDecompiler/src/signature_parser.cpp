@@ -1,5 +1,5 @@
-#include "stdafx.h"
-
+#include "signature_parser.h"
+#include "assembler.h"
 #include "log.h"
 #include "shader.h"
 

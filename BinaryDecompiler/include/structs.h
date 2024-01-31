@@ -3,10 +3,9 @@
 #include <map>
 #include <vector>
 #include <string>
-#include "include/hlslcc.h"
-
-#include "internal_includes/tokens.h"
-#include "internal_includes/reflect.h"
+#include "hlslcc.h"
+#include "tokens.h"
+#include "reflect.h"
 
 enum{ MAX_SUB_OPERANDS = 3};
 

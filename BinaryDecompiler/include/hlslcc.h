@@ -1,9 +1,9 @@
-#ifndef HLSLCC_H_
-#define HLSLCC_H_
+#pragma once
 
 #include <vector>
 #include <map>
 #include <string>
+#include <cstdint>
 
 #if defined (_WIN32) && defined(HLSLCC_DYNLIB)
     #define HLSLCC_APIENTRY __stdcall
@@ -17,9 +17,7 @@
     #define HLSLCC_API
 #endif
 
-#include <stdint.h>
-
-typedef enum
+enum GLLang
 {
     LANG_DEFAULT,// Depends on the HLSL shader model.
     LANG_ES_100,
@@ -34,7 +32,8 @@ typedef enum
     LANG_420,
     LANG_430,
     LANG_440,
-} GLLang;
+};
+constexpr int LANG_ES_310 = 10;
 
 enum {MAX_SHADER_VEC4_OUTPUT = 512};
 enum {MAX_SHADER_VEC4_INPUT = 512};
@@ -52,7 +51,7 @@ enum {MAX_FUNCTION_POINTERS = 128};
 #define MAX_FUNCTION_TABLES 256
 #define MAX_RESOURCE_BINDINGS 256
 
-typedef enum SPECIAL_NAME
+enum SPECIAL_NAME
 {
     NAME_UNDEFINED = 0,
     NAME_POSITION = 1,
@@ -78,17 +77,19 @@ typedef enum SPECIAL_NAME
     NAME_FINAL_TRI_INSIDE_TESSFACTOR = 20, 
     NAME_FINAL_LINE_DETAIL_TESSFACTOR = 21,
     NAME_FINAL_LINE_DENSITY_TESSFACTOR = 22,
-} SPECIAL_NAME;
+};
 
 
-typedef enum { 
+enum INOUT_COMPONENT_TYPE 
+{
   INOUT_COMPONENT_UNKNOWN  = 0,
   INOUT_COMPONENT_UINT32   = 1,
   INOUT_COMPONENT_SINT32   = 2,
   INOUT_COMPONENT_FLOAT32  = 3
-} INOUT_COMPONENT_TYPE;
+};
 
-typedef enum MIN_PRECISION { 
+enum MIN_PRECISION 
+{ 
   MIN_PRECISION_DEFAULT    = 0,
   MIN_PRECISION_FLOAT_16   = 1,
   MIN_PRECISION_FLOAT_2_8  = 2,
@@ -97,7 +98,7 @@ typedef enum MIN_PRECISION {
   MIN_PRECISION_UINT_16    = 5,
   MIN_PRECISION_ANY_16     = 0xf0,
   MIN_PRECISION_ANY_10     = 0xf1
-} MIN_PRECISION;
+};
 
 struct InOutSignature
 {
@@ -113,7 +114,7 @@ struct InOutSignature
 	MIN_PRECISION eMinPrec;
 };
 
-typedef enum ResourceType_TAG
+enum ResourceType_TAG
 {
     RTYPE_CBUFFER,//0
     RTYPE_TBUFFER,//1
@@ -127,17 +128,20 @@ typedef enum ResourceType_TAG
     RTYPE_UAV_APPEND_STRUCTURED,//9
     RTYPE_UAV_CONSUME_STRUCTURED,//10
     RTYPE_UAV_RWSTRUCTURED_WITH_COUNTER,//11
-} ResourceType;
+};
+using ResourceType = ResourceType_TAG;
 
-typedef enum ResourceGroup_TAG {
+enum ResourceGroup_TAG 
+{
 	RGROUP_CBUFFER,
 	RGROUP_TEXTURE,
 	RGROUP_SAMPLER,
 	RGROUP_UAV,
 	RGROUP_COUNT,
-} ResourceGroup;
+};
+using ResourceGroup = ResourceGroup_TAG;
 
-typedef enum REFLECT_RESOURCE_DIMENSION
+enum REFLECT_RESOURCE_DIMENSION
 {
     REFLECT_RESOURCE_DIMENSION_UNKNOWN = 0,
     REFLECT_RESOURCE_DIMENSION_BUFFER = 1,
@@ -151,9 +155,9 @@ typedef enum REFLECT_RESOURCE_DIMENSION
     REFLECT_RESOURCE_DIMENSION_TEXTURECUBE = 9,
     REFLECT_RESOURCE_DIMENSION_TEXTURECUBEARRAY = 10,
     REFLECT_RESOURCE_DIMENSION_BUFFEREX = 11,
-} REFLECT_RESOURCE_DIMENSION;
+};
 
-typedef struct ResourceBinding_TAG
+struct ResourceBinding_TAG
 {
     std::string Name;
     ResourceType eType;
@@ -163,9 +167,11 @@ typedef struct ResourceBinding_TAG
     REFLECT_RESOURCE_DIMENSION eDimension;
     uint32_t ui32ReturnType;
     uint32_t ui32NumSamples;
-} ResourceBinding;
+};
+using ResourceBinding = ResourceBinding_TAG;
 
-typedef enum _SHADER_VARIABLE_TYPE { 
+enum SHADER_VARIABLE_TYPE 
+{
   SVT_VOID                         = 0,
   SVT_BOOL                         = 1,
   SVT_INT                          = 2,
@@ -214,9 +220,10 @@ typedef enum _SHADER_VARIABLE_TYPE {
   SVT_CONSUME_STRUCTURED_BUFFER    = 51,
 
   SVT_FORCE_DWORD                  = 0x7fffffff
-} SHADER_VARIABLE_TYPE;
+};
 
-typedef enum _SHADER_VARIABLE_CLASS { 
+enum SHADER_VARIABLE_CLASS 
+{
   SVC_SCALAR               = 0,
   SVC_VECTOR               = ( SVC_SCALAR + 1 ),
   SVC_MATRIX_ROWS          = ( SVC_VECTOR + 1 ),
@@ -226,45 +233,47 @@ typedef enum _SHADER_VARIABLE_CLASS {
   SVC_INTERFACE_CLASS      = ( SVC_STRUCT + 1 ),
   SVC_INTERFACE_POINTER    = ( SVC_INTERFACE_CLASS + 1 ),
   SVC_FORCE_DWORD          = 0x7fffffff
-} SHADER_VARIABLE_CLASS;
+};
 
-struct ShaderVarType {
-  SHADER_VARIABLE_CLASS Class;
-  SHADER_VARIABLE_TYPE  Type;
-  uint32_t                  Rows;
-  uint32_t                      Columns;
-  uint32_t                      Elements;
-  uint32_t                      MemberCount;
-  uint32_t                      Offset;
-  std::string                   Name;
+struct ShaderVarType 
+{
+    SHADER_VARIABLE_CLASS Class;
+    SHADER_VARIABLE_TYPE  Type;
+    uint32_t              Rows;
+    uint32_t              Columns;
+    uint32_t              Elements;
+    uint32_t              MemberCount;
+    uint32_t              Offset;
+    uint32_t              ParentCount;
+    ShaderVarType*        Parent;
+    ShaderVarType*        Members;
 
-  uint32_t ParentCount;
-  ShaderVarType *Parent;
-  //Includes all parent names.
-  std::string                   FullName;
+    std::string           Name;
+    std::string           FullName;
 
-  ShaderVarType *Members;
+    ShaderVarType() 
+    : Members(nullptr)
+    {}
 
-  ShaderVarType() :
-	  Members(NULL)
-  {}
-
-  ~ShaderVarType()
-  {
-	  delete [] Members;
-  }
+    ~ShaderVarType()
+    {
+        if (Members)
+        {
+            delete[] Members;
+        }  
+    }
 };
 
 struct ShaderVar
 {
     std::string Name;
-	bool haveDefaultValue;
     std::vector<uint32_t> pui32DefaultValues;
 	//Offset/Size in bytes.
     uint32_t ui32StartOffset;
     uint32_t ui32Size;
 
     ShaderVarType sType;
+    bool haveDefaultValue;
 };
 
 struct ConstantBuffer
@@ -287,7 +296,7 @@ struct ClassType
     uint16_t ui16Sampler;
 };
 
-typedef struct ClassInstance_TAG
+struct ClassInstance_TAG
 {
     std::string Name;
     uint16_t ui16ID;
@@ -295,7 +304,8 @@ typedef struct ClassInstance_TAG
     uint16_t ui16ConstBufOffset;
     uint16_t ui16Texture;
     uint16_t ui16Sampler;
-} ClassInstance;
+};
+using ClassInstance = ClassInstance_TAG;
 
 enum TESSELLATOR_PARTITIONING
 {
@@ -306,14 +316,14 @@ enum TESSELLATOR_PARTITIONING
     TESSELLATOR_PARTITIONING_FRACTIONAL_EVEN = 4
 };
 
-typedef enum TESSELLATOR_OUTPUT_PRIMITIVE
+enum TESSELLATOR_OUTPUT_PRIMITIVE
 {
     TESSELLATOR_OUTPUT_UNDEFINED     = 0,
     TESSELLATOR_OUTPUT_POINT         = 1,
     TESSELLATOR_OUTPUT_LINE          = 2,
     TESSELLATOR_OUTPUT_TRIANGLE_CW   = 3,
     TESSELLATOR_OUTPUT_TRIANGLE_CCW  = 4
-} TESSELLATOR_OUTPUT_PRIMITIVE;
+};
 
 struct ShaderInfo
 {
@@ -374,7 +384,7 @@ struct ShaderInfo
 	}
 };
 
-typedef enum INTERPOLATION_MODE
+enum INTERPOLATION_MODE
 {
     INTERPOLATION_UNDEFINED = 0,
     INTERPOLATION_CONSTANT = 1,
@@ -384,7 +394,5 @@ typedef enum INTERPOLATION_MODE
     INTERPOLATION_LINEAR_NOPERSPECTIVE_CENTROID = 5,
     INTERPOLATION_LINEAR_SAMPLE = 6,
     INTERPOLATION_LINEAR_NOPERSPECTIVE_SAMPLE = 7,
-} INTERPOLATION_MODE;
-
-#endif
+};
 

@@ -1,9 +1,8 @@
-
-#include "internal_includes/tokens.h"
-#include "internal_includes/structs.h"
-#include "internal_includes/decode.h"
-#include "internal_includes/reflect.h"
-#include "internal_includes/debug.h"
+#include "tokens.h"
+#include "structs.h"
+#include "decode.h"
+#include "reflect.h"
+#include "debug.h"
 #include "log.h"
 
 class DecompileErrorDX9 : public std::exception {} decompileErrorDX9; // 3DMigoto specific
