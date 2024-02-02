@@ -1,19 +1,6 @@
 #pragma once
 
-#include <ctype.h>
-#include <wchar.h>
-#include <string>
-#include <vector>
-#include <map>
-
-#include <d3d11_1.h>
-#include <dxgi1_2.h>
-
-#include <D3Dcompiler.h>
-#include <d3d9.h>
-#include <DirectXMath.h>
-#include <wrl/client.h>
-
+#include "base.h"
 #include "version.h"
 #include "log.h"
 #include "util_min.h"
@@ -227,7 +214,7 @@ static int _autoicmp(const char *s1, const char *s2)
 // To use this function be sure to terminate an EnumName_t list with {NULL, 0}
 // as it cannot use ArraySize on passed in arrays.
 template <class T1, class T2>
-static T2 lookup_enum_val(struct EnumName_t<T1, T2> *enum_names, T1 name, T2 default, bool *found=NULL)
+static T2 lookup_enum_val(struct EnumName_t<T1, T2> *enum_names, T1 name, T2 default_, bool *found = nullptr)
 {
 	for (; enum_names->name; enum_names++) {
 		if (!_autoicmp(name, enum_names->name)) {
@@ -240,10 +227,10 @@ static T2 lookup_enum_val(struct EnumName_t<T1, T2> *enum_names, T1 name, T2 def
 	if (found)
 		*found = false;
 
-	return default;
+	return default_;
 }
 template <class T1, class T2>
-static T2 lookup_enum_val(struct EnumName_t<T1, T2> *enum_names, T1 name, size_t len, T2 default, bool *found=NULL)
+static T2 lookup_enum_val(struct EnumName_t<T1, T2> *enum_names, T1 name, size_t len, T2 default_, bool *found = nullptr)
 {
 	for (; enum_names->name; enum_names++) {
 		if (!_wcsnicmp(name, enum_names->name, len)) {
@@ -256,7 +243,7 @@ static T2 lookup_enum_val(struct EnumName_t<T1, T2> *enum_names, T1 name, size_t
 	if (found)
 		*found = false;
 
-	return default;
+	return default_;
 }
 template <class T1, class T2>
 static T1 lookup_enum_name(struct EnumName_t<T1, T2> *enum_names, T2 val)
@@ -727,7 +714,8 @@ static std::string BinaryToAsmText(const void *pShaderBytecode, size_t BytecodeL
 	r = disassembler(&byteCode, &disassembly, comments.c_str(), hexdump,
 			d3dcompiler_46_compat, disassemble_undecipherable_data, patch_cb_offsets);
 #endif // MIGOTO_DX
-	if (FAILED(r)) {
+	if (FAILED(r))
+    {
 		LogInfo("  disassembly failed. Error: %x\n", r);
 		return "";
 	}

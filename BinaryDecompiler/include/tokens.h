@@ -15,7 +15,7 @@ enum SHADER_TYPE
 
 static SHADER_TYPE DecodeShaderType(uint32_t ui32Token)
 {
-	return (SHADER_TYPE)((ui32Token & 0xffff0000) >> 16);
+    return (SHADER_TYPE)((ui32Token & 0xffff0000) >> 16);
 }
 
 static uint32_t DecodeProgramMajorVersion(uint32_t ui32Token)

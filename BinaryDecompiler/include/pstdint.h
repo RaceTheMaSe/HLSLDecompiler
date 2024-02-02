@@ -183,9 +183,9 @@
  */
 #pragma once
 
-#include <stddef.h>
-#include <limits.h>
-#include <signal.h>
+#include <cstddef>
+#include <climits>
+#include <csignal>
 
 /*
  *  For gcc with _STDINT_H, fill in the PRINTF_INT*_MODIFIER macros, and
@@ -193,7 +193,7 @@
  */
 
 #if (defined(_MSC_VER) || (defined(__STDC__) && __STDC__ && __STDC_VERSION__ >= 199901L) || (defined (__WATCOMC__) && (defined (_STDINT_H_INCLUDED) || __WATCOMC__ >= 1250)) || (defined(__GNUC__) && (defined(_STDINT_H) || defined(_STDINT_H_) || defined (__UINT_FAST64_TYPE__)) )) && !defined (_PSTDINT_H_INCLUDED)
-#include <stdint.h>
+#include <cstdint>
 #define _PSTDINT_H_INCLUDED
 # ifndef PRINTF_INT64_MODIFIER
 #  define PRINTF_INT64_MODIFIER "ll"

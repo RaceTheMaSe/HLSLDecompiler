@@ -113,9 +113,9 @@ static int PixelInterpDependency(const GLLang eLang)
 
 static int HaveImageLoadStore(const GLLang eLang)
 {
-	if(eLang >= LANG_420 || eLang == LANG_ES_310)
-	{
-		return 1;
-	}
-	return 0;
+    if(eLang >= LANG_420 || eLang == LANG_ES_310)
+    {
+        return 1;
+    }
+    return 0;
 }

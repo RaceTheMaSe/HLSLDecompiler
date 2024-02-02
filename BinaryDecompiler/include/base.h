@@ -10,38 +10,49 @@
 #include <cstdio>
 #include <tchar.h>
 #include <cstdint>
-#include <D3DCompiler.h>
+#include <stdexcept>
+#include <cstddef>
+
+#include <cctype>
+#include <cwchar>
 #include <string>
 #include <vector>
+#include <map>
 #include <unordered_map>
-#include <stdexcept>
 
-// VS2013 BUG WORKAROUND: Make sure this class has a unique type name!
-struct AssemblerParseError: public std::exception 
+#include <d3d9.h>
+#include <d3d11_1.h>
+#include <dxgi1_2.h>
+
+#include <D3DCompiler.h>
+#include <DirectXMath.h>
+#include <wrl/client.h>
+
+struct AssemblerParseError final : public std::exception
 {
-	std::string context, desc, msg;
-	int line_no;
+    std::string context, desc, msg;
+    int line_no;
 
-	AssemblerParseError(std::string context_, std::string desc_) :
-		context(std::move(context_)),
-		desc(std::move(desc_)),
-		line_no(0)
-	{
-		update_msg();
-	}
+    AssemblerParseError(std::string context_, std::string desc_)
+    : context(std::move(context_)), desc(std::move(desc_)), line_no(0)
+    {
+        update_msg();
+    }
 
-	void update_msg()
-	{
-		msg = "Assembly parse error";
-		if (line_no > 0)
-			msg += std::string(" on line ") + std::to_string(line_no);
-		msg += ", " + desc + ":\n\"" + context + "\"";
-	}
+    void update_msg()
+    {
+        msg = "Assembly parse error";
+        if (line_no > 0)
+        {
+            msg += std::string(" on line ") + std::to_string(line_no);
+        }
+        msg += ", " + desc + ":\n\"" + context + "\"";
+    }
 
-	const char* what() const override
-	{
-		return msg.c_str();
-	}
+    const char* what() const override
+    {
+        return msg.c_str();
+    }
 };
 
 struct shader_ins

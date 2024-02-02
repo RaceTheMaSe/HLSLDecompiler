@@ -187,20 +187,20 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 {
 	void *section;
 	uint32_t section_size, padding, alloc_size, name_off;
-	char *name_ptr = NULL;
-	void *padding_ptr = NULL;
-	struct section_header *section_header = NULL;
-	struct sgn_header *sgn_header = NULL;
-	sgn_entry_serialiased *entryn = NULL;
-	sg5_entry_serialiased *entry5 = NULL;
-	sg1_entry_serialiased *entry1 = NULL;
+	char *name_ptr = nullptr;
+	void *padding_ptr = nullptr;
+	section_header *section_header = nullptr;
+	sgn_header *sgn_header = nullptr;
+	sgn_entry_serialiased *entryn = nullptr;
+	sg5_entry_serialiased *entry5 = nullptr;
+	sg1_entry_serialiased *entry1 = nullptr;
 
 	// Geometry shader 5 never uses OSGN, bump to OSG5:
-	if (entry_size == 24 && section24 == NULL)
+	if (entry_size == 24 && section24 == nullptr)
 		entry_size = 28;
 
 	// Only OSG5 exists in version 5, so bump ISG & PSG to version 5.1:
-	if (entry_size == 28 && section28 == NULL)
+	if (entry_size == 28 && section28 == nullptr)
 		entry_size = 32;
 
 	// Calculate various offsets and sizes:
@@ -216,7 +216,7 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 	section = malloc(alloc_size);
 	if (!section) {
 		LogInfo("Out of memory\n");
-		return NULL;
+		return nullptr;
 	}
 
 	// Pointers to useful data structures and offsets in the buffer:
@@ -226,9 +226,9 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 	// Only one of these will be used as the base address depending on the
 	// structure version, but pointers to the older versions will also be
 	// updated during the iteration:
-	entryn = (struct sgn_entry_serialiased*)((char*)sgn_header + sizeof(struct sgn_header));
-	entry5 = (struct sg5_entry_serialiased*)entryn;
-	entry1 = (struct sg1_entry_serialiased*)entryn;
+	entryn = (sgn_entry_serialiased*)((char*)sgn_header + sizeof(struct sgn_header));
+	entry5 = (sg5_entry_serialiased*)entryn;
+	entry1 = (sg1_entry_serialiased*)entryn;
 
 	LogDebug("section: 0x%p, section_header: 0x%p, sgn_header: 0x%p, padding_ptr: 0x%p, entry: 0x%p\n",
 			section, (char*)section_header, sgn_header, padding_ptr, entryn);
@@ -252,7 +252,8 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 	sgn_header->unknown = sizeof(struct sgn_header); // Not confirmed, but seems likely. Always 8
 
 	// Fill out entries:
-	for (struct sgn_entry_unserialised const &unserialised : *entries) {
+	for (struct sgn_entry_unserialised const &unserialised : *entries)
+    {
 		switch (entry_size) {
 			case 32:
 				entry1->min_precision = unserialised.min_precision;
@@ -268,7 +269,7 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 				entryn->name_offset = name_off + unserialised.name_offset;
 				name_ptr = (char*)sgn_header + entryn->name_offset;
 				memcpy(name_ptr, unserialised.name.c_str(), unserialised.name.size() + 1);
-				memcpy(&entryn->common, &unserialised.common, sizeof(struct sgn_entry_common));
+				memcpy(&entryn->common, &unserialised.common, sizeof(sgn_entry_common));
 				entryn++;
 		}
 	}
@@ -291,14 +292,15 @@ static void* parse_signature_section(char *section24, char *section28, char *sec
 	char reg[16]; // More than long enough for even "oStencilRef"
 	char mask[8], used[8]; // We read 7 characters - check the reason below
 	char format[16]; // Long enough for even "unknown"
-	std::vector<struct sgn_entry_unserialised> entries;
-	struct sgn_entry_unserialised entry;
+	std::vector<sgn_entry_unserialised> entries;
+	sgn_entry_unserialised entry;
 
 	// If minimum precision formats are in use we bump the section versions:
 	if (sfi & SFI_MIN_PRECISION)
 		entry_size = max(entry_size, 32);
 
-	while (*pos != shader->npos) {
+	while (*pos != std::string::npos)
+    {
 		line = next_line(shader, pos);
 
 		LogDebug("%s\n", line.c_str());
@@ -376,7 +378,7 @@ static void* parse_signature_section(char *section24, char *section28, char *sec
 		entry.common.zero = 0;
 
 		// Check if a previous entry used the same semantic name
-		for (struct sgn_entry_unserialised const &prev_entry : entries) {
+		for (sgn_entry_unserialised const &prev_entry : entries) {
 			if (prev_entry.name == entry.name) {
 				entry.name_offset = prev_entry.name_offset;
 				// Why do so few languages have a for else
@@ -499,13 +501,18 @@ uint64_t parse_global_flags_to_sfi(std::string *shader)
 	size_t pos = 0, gf_pos = 16;
 	int i;
 
-	while (pos != shader->npos) {
+	while (pos != std::string::npos)
+    {
 		line = next_line(shader, &pos);
-		if (!strncmp(line.c_str(), "dcl_globalFlags ", 16)) {
+		if (!strncmp(line.c_str(), "dcl_globalFlags ", 16))
+        {
 			LogDebug("%s\n", line.c_str());
-			while (gf_pos != std::string::npos) {
-				for (i = 0; i < ARRAYSIZE(global_flag_sfi_map); i++) {
-					if (!line.compare(gf_pos, global_flag_sfi_map[i].len, global_flag_sfi_map[i].gf)) {
+			while (gf_pos != std::string::npos)
+            {
+				for (i = 0; i < ARRAYSIZE(global_flag_sfi_map); i++)
+                {
+					if (!line.compare(gf_pos, global_flag_sfi_map[i].len, global_flag_sfi_map[i].gf))
+                    {
 						LogDebug("Mapped %s to Subshader Feature 0x%llx\n",
 								global_flag_sfi_map[i].gf, global_flag_sfi_map[i].sfi);
 						sfi |= global_flag_sfi_map[i].sfi;
@@ -610,7 +617,7 @@ static bool is_geometry_shader_5(std::string *shader, size_t start_pos) {
 
 static bool parse_section(std::string *line, std::string *shader, size_t *pos, void **section, uint64_t *sfi, bool *force_shex)
 {
-	*section = NULL;
+	*section = nullptr;
 
 	if (!strncmp(line->c_str() + 1, "s_4_", 4)) {
 		if (!!(*sfi & SFI_FORCE_SHEX) || *force_shex)
@@ -634,7 +641,7 @@ static bool parse_section(std::string *line, std::string *shader, size_t *pos, v
 		LogInfo("Parsing Output Signature section...\n");
 		char *section24 = "OSGN";
 		if (is_geometry_shader_5(shader, *pos))
-			section24 = NULL;
+			section24 = nullptr;
 		*section = parse_signature_section(section24, "OSG5", "OSG1", shader, pos, true, *sfi);
 	} else if (!strncmp(line->c_str(), "// Note: shader requires additional functionality:", 50)) {
 		LogInfo("Parsing Subshader Feature Info section...\n");
@@ -648,20 +655,20 @@ static bool parse_section(std::string *line, std::string *shader, size_t *pos, v
 
 static void serialise_shader_binary(std::vector<void*> *sections, uint32_t all_sections_size, std::vector<byte> *bytecode)
 {
-	struct dxbc_header *header = NULL;
-	uint32_t *section_offset_ptr = NULL;
-	void *section_ptr = NULL;
+	dxbc_header *header = nullptr;
+	uint32_t *section_offset_ptr = nullptr;
+	void *section_ptr = nullptr;
 	uint32_t section_size;
 	uint32_t shader_size;
 
 	// Calculate final size of shader binary:
-	shader_size = (uint32_t)(sizeof(struct dxbc_header) + 4 * sections->size() + all_sections_size);
+	shader_size = (uint32_t)(sizeof(dxbc_header) + 4 * sections->size() + all_sections_size);
 
 	bytecode->resize(shader_size);
 
 	// Get some useful pointers into the buffer:
-	header = (struct dxbc_header*)bytecode->data();
-	section_offset_ptr = (uint32_t*)((char*)header + sizeof(struct dxbc_header));
+	header = (dxbc_header*)bytecode->data();
+	section_offset_ptr = (uint32_t*)((char*)header + sizeof(dxbc_header));
 	section_ptr = (void*)(section_offset_ptr + sections->size());
 
 	memcpy(header->signature, "DXBC", 4);
@@ -687,19 +694,21 @@ static HRESULT manufacture_shader_binary(const void *pShaderAsm, size_t AsmLengt
 	bool done = false;
 	std::vector<void*> sections;
 	uint32_t section_size, all_sections_size = 0;
-	void *section;
+	void *section = nullptr;
 	HRESULT hr = E_FAIL;
 	uint64_t sfi = 0LL;
 	bool force_shex = false;
 
 	sfi = parse_global_flags_to_sfi(&shader_str);
 
-	while (!done && pos != shader_str.npos) {
+	while (!done && pos != std::string::npos)
+    {
 		line = next_line(&shader_str, &pos);
 		//LogInfo("%s\n", line.c_str());
 
 		done = parse_section(&line, &shader_str, &pos, &section, &sfi, &force_shex);
-		if (section) {
+		if (section)
+        {
 			sections.push_back(section);
 			section_size = *((uint32_t*)section + 1) + sizeof(section_header);
 			all_sections_size += section_size;
@@ -733,31 +742,29 @@ static HRESULT manufacture_shader_binary(const void *pShaderAsm, size_t AsmLengt
 
 	hr = S_OK;
 out_free:
-	for (void * const &section : sections)
-		free(section);
+	for (void * const &each_section : sections)
+		free(each_section);
 	return hr;
 }
 
 HRESULT AssembleFluganWithSignatureParsing(std::vector<char> *assembly, std::vector<byte> *result_bytecode,
 		std::vector<AssemblerParseError> *parse_errors)
 {
-	std::vector<byte> manufactured_bytecode;
+    std::vector<byte> manufactured_bytecode;
 
-	// Flugan's assembler normally cheats and reuses sections from the
-	// original binary when replacing a shader from the game, but that
-	// restricts what modifications we can do and is not an option when
-	// assembling a stand-alone shader. Let's parse the missing sections
-	// ourselved and manufacture a binary shader with those section to pass
-	// to Flugan's assembler. Later we should refactor this into the
-	// assembler itself.
+    // Flugan's assembler normally cheats and reuses sections from the
+    // original binary when replacing a shader from the game, but that
+    // restricts what modifications we can do and is not an option when
+    // assembling a stand-alone shader. Let's parse the missing sections
+    // ourselves and manufacture a binary shader with those section to pass
+    // to Flugan's assembler. Later we should refactor this into the
+    // assembler itself.
+    HRESULT hr = manufacture_shader_binary(assembly->data(), assembly->size(), &manufactured_bytecode);
+    if (FAILED(hr)) return E_FAIL;
 
-	HRESULT hr = manufacture_shader_binary(assembly->data(), assembly->size(), &manufactured_bytecode);
-	if (FAILED(hr))
-		return E_FAIL;
+    *result_bytecode = assembler(assembly, manufactured_bytecode, parse_errors);
 
-	*result_bytecode = assembler(assembly, manufactured_bytecode, parse_errors);
-
-	return S_OK;
+    return S_OK;
 }
 std::vector<byte> AssembleFluganWithOptionalSignatureParsing(std::vector<char> *assembly,
 		bool assemble_signatures, std::vector<byte> *orig_bytecode,

@@ -38,7 +38,7 @@
 typedef const uint8_t *buffer;
 
 
-#include "generated-constants.cpp"
+#include "generated_constants.cpp"
 
 
 static uint32_t append_trivial(uint32_t crc, buffer input, size_t length)

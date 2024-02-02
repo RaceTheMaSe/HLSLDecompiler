@@ -24,10 +24,10 @@
 #include <set>
 #include <algorithm>
 
-#include "DecompileHLSL.h"
+#include "decompile_hlsl.h"
 
-#include "BinaryDecompiler\internal_includes\structs.h"
-#include "BinaryDecompiler\internal_includes\decode.h"
+#include "structs.h"
+#include "decode.h"
 
 #include <excpt.h>
 

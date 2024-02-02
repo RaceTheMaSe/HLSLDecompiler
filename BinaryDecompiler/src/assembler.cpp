@@ -1,5 +1,5 @@
 #include "assembler.h"
-#include "float.h"
+#include <cfloat>
 
 #if MIGOTO_DX == 9
 #include <d3dx9shader.h>
@@ -2925,7 +2925,7 @@ HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const ch
 	char* asmBuffer;
 	size_t asmSize;
 	vector<byte> asmBuf;
-	ID3DBlob* pDissassembly = NULL;
+	ID3DBlob* pDissassembly = nullptr;
 
 	// We disable debug info in the disassembler as it interferes with our
 	// ability to match assembly lines with bytecode below
@@ -2941,7 +2941,8 @@ HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const ch
 
 	byte* codeByteStart;
 	int codeChunk = 0;
-	for (DWORD i = 1; i <= numChunks; i++) {
+	for (DWORD i = 1; i <= numChunks; i++)
+    {
 		codeChunk = numChunks - i;
 		codeByteStart = buffer->data() + chunkOffsets[numChunks - i];
 		if (memcmp(codeByteStart, "SHEX", 4) == 0 || memcmp(codeByteStart, "SHDR", 4) == 0)
