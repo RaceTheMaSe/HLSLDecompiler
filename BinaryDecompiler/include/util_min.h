@@ -25,9 +25,10 @@ inline bool operator && (ENUMTYPE a,      bool b) { return (((int)a) && ((int)b)
 inline bool operator ! (ENUMTYPE a) { return (!((int)a)); }
 
 template <class T1, class T2>
-struct EnumName_t {
-	T1 name;
-	T2 val;
+struct EnumName_t
+{
+    T1 name;
+    T2 val;
 };
 
 const char* find_ini_section_lite(const char *buf, const char *section_name);

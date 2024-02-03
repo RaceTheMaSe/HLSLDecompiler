@@ -30,15 +30,14 @@ extern bool gLogDebug;
 
 static std::string LogTime()
 {
-    std::string timeStr;
-    char cTime[32];
-    tm timestruct;
+    char c_time[64];
+    tm current_time = {};
 
-    time_t ltime = time(0);
-    localtime_s(&timestruct, &ltime);
-    asctime_s(cTime, sizeof(cTime), &timestruct);
+    time_t local_time = time(nullptr);
+    localtime_s(&current_time, &local_time);
+    asctime_s(c_time, sizeof(c_time), &current_time);
 
-    timeStr = cTime;
-    return timeStr;
+    std::string time_str = c_time;
+    return time_str;
 }
 
