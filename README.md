@@ -1,13 +1,10 @@
 # Introduction
-Translate dxbc to hlsl source code. You can use it alone, or as a shader processing tool in RenderDoc to decompile shader. Although the decompiled result looks very like the disassembly, you can edit the decompiled source code and refresh to see the change in RenderDoc. It's very useful while learning and analyzing rendering techniques in games if you don't have source code.
+Translate hlsl shader binary to dxbc or hlsl source code. You can use it alone, or as a shader processing tool in RenderDoc to decompile shader. Although the decompiled result looks very like the disassembly, you can edit the decompiled source code and refresh to see the change in RenderDoc. It's very useful while learning and analyzing rendering techniques in games if you don't have source code.
 
 # Features
 - Support shader model 4 and shader model 5
 - Covert shader binary to dxbc or hlsl source code
 - Covert dxbc source code to shader binary, you can modify dxbc code and apply modification to pipeline state
-
-# ToDo
-- Support shader model 6
 
 # Getting started
 ```shell

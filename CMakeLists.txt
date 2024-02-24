@@ -7,7 +7,8 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_LIST_DIR}/bin")
 
-# Subdirectories
-add_subdirectory(BinaryDecompiler)
-add_subdirectory(D3D_Shaders)
+# For clangd 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Subdirectory
 add_subdirectory(HLSLDecompiler)
