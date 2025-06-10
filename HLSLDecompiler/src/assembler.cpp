@@ -17,7 +17,7 @@ using namespace std;
 
 static unordered_map<string, vector<DWORD>> codeBin;
 
-static DWORD strToDWORD(string s)
+static DWORD strToDWORD(const string& s)
 {
 	// d3dcompiler_46 symbolic NANs (missing +QNAN and +IND?):
 	if (s == "-1.#IND0000")
@@ -189,20 +189,21 @@ void writeLUT()
 		fputs(":->", f);
 		vector<DWORD> b = it->second;
 		int nextOperand = 1;
+		(void)nextOperand; // unused variable
 		for (DWORD i = 0; i < b.size(); i++) {
 			if (i == 0) {
 				char hex[40];
 				shader_ins* ins = (shader_ins*)&b[0];
-				if (ins->_11_23 > 0) {
-					if (ins->extended)
-						sprintf_s(hex, "0x%08X: %d,%d,%d<>%d->", b[0], ins->opcode, ins->_11_23, ins->length, ins->extended);
+				if (ins->u._11_23 > 0) {
+					if (ins->u.extended)
+						sprintf_s(hex, "0x%08X: %d,%d,%d<>%d->", b[0], ins->u.opcode, ins->u._11_23, ins->u.length, ins->u.extended);
 					else
-						sprintf_s(hex, "0x%08X: %d,%d,%d->", b[0], ins->opcode, ins->_11_23, ins->length);
+						sprintf_s(hex, "0x%08X: %d,%d,%d->", b[0], ins->u.opcode, ins->u._11_23, ins->u.length);
 				} else {
-					if (ins->extended)
-						sprintf_s(hex, "0x%08X: %d,%d<>%d->", b[0], ins->opcode, ins->length, ins->extended);
+					if (ins->u.extended)
+						sprintf_s(hex, "0x%08X: %d,%d<>%d->", b[0], ins->u.opcode, ins->u.length, ins->u.extended);
 					else
-						sprintf_s(hex, "0x%08X: %d,%d->", b[0], ins->opcode, ins->length);
+						sprintf_s(hex, "0x%08X: %d,%d->", b[0], ins->u.opcode, ins->u.length);
 				}
 				fputs(hex, f);
 			} else {
@@ -220,68 +221,68 @@ static void handleSwizzle(string s, token_operand* tOp, bool special = false)
 {
 	if (special == true){
 		// Mask
-		tOp->mode = 0; // Mask
+		tOp->u.mode = 0; // Mask
 		if (s.size() > 0 && s[0] == 'x') {
-			tOp->sel |= 0x1;
+			tOp->u.sel |= 0x1;
 			s.erase(s.begin());
 		}
 		if (s.size() > 0 && s[0] == 'y') {
-			tOp->sel |= 0x2;
+			tOp->u.sel |= 0x2;
 			s.erase(s.begin());
 		}
 		if (s.size() > 0 && s[0] == 'z') {
-			tOp->sel |= 0x4;
+			tOp->u.sel |= 0x4;
 			s.erase(s.begin());
 		}
 		if (s.size() > 0 && s[0] == 'w') {
-			tOp->sel |= 0x8;
+			tOp->u.sel |= 0x8;
 			s.erase(s.begin());
 		}
 		return;
 	} else if (s.size() == 0) {
-		tOp->mode = 0;
-		tOp->comps_enum = 0;
+		tOp->u.mode = 0;
+		tOp->u.comps_enum = 0;
 		return;
 	} else if(s.size() == 4) {
 		// Swizzle
-		tOp->mode = 1; // Swizzle
+		tOp->u.mode = 1; // Swizzle
 		for (int i = 0; i < 4; i++) {
 			if (s[i] == 'x')
-				tOp->sel |= 0 << (2 * i);
+				tOp->u.sel |= 0 << (2 * i);
 			if (s[i] == 'y')
-				tOp->sel |= 1 << (2 * i);
+				tOp->u.sel |= 1 << (2 * i);
 			if (s[i] == 'z')
-				tOp->sel |= 2 << (2 * i);
+				tOp->u.sel |= 2 << (2 * i);
 			if (s[i] == 'w')
-				tOp->sel |= 3 << (2 * i);
+				tOp->u.sel |= 3 << (2 * i);
 		}
 	} else if (s.size() == 1){
-		tOp->mode = 2; // Scalar
+		tOp->u.mode = 2; // Scalar
 		if (s[0] == 'x')
-			tOp->sel = 0;
+			tOp->u.sel = 0;
 		if (s[0] == 'y')
-			tOp->sel = 1;
+			tOp->u.sel = 1;
 		if (s[0] == 'z')
-			tOp->sel = 2;
+			tOp->u.sel = 2;
 		if (s[0] == 'w')
-			tOp->sel = 3;
+			tOp->u.sel = 3;
 	} else {
 		// Mask
-		tOp->mode = 0; // Mask
+		tOp->u.mode = 0; // Mask
 		if (s.size() > 0 && s[0] == 'x') {
-			tOp->sel |= 0x1;
+			tOp->u.sel |= 0x1;
 			s.erase(s.begin());
 		}
 		if (s.size() > 0 && s[0] == 'y') {
-			tOp->sel |= 0x2;
+			tOp->u.sel |= 0x2;
 			s.erase(s.begin());
 		}
 		if (s.size() > 0 && s[0] == 'z') {
-			tOp->sel |= 0x4;
+			tOp->u.sel |= 0x4;
 			s.erase(s.begin());
 		}
 		if (s.size() > 0 && s[0] == 'w') {
-			tOp->sel |= 0x8;
+			tOp->u.sel |= 0x8;
 			s.erase(s.begin());
 		}
 	}
@@ -307,7 +308,7 @@ struct special_purpose_register
 	// may interact with this, but this is at least passing all test cases.
 	unsigned comps_enum;
 
-	char *name;
+	const char *name;
 };
 
 static struct special_purpose_register special_purpose_registers[] = {
@@ -340,19 +341,19 @@ static struct special_purpose_register special_purpose_registers[] = {
 static bool assemble_special_purpose_register(string &s, vector<DWORD> &v, token_operand *tOp, bool special)
 {
 	size_t swiz_pos = s.find('.');
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < ARRAYSIZE(special_purpose_registers); i++) {
 		if (s.compare(0, swiz_pos, special_purpose_registers[i].name))
 			continue;
 
-		tOp->file = special_purpose_registers[i].file;
+		tOp->u.file = special_purpose_registers[i].file;
 
 		// comps_enum was set to 2 as a default at the start of assembleOp
 		if (swiz_pos != string::npos)
 			handleSwizzle(s.substr(swiz_pos + 1), tOp, special);
 		else
-			tOp->comps_enum = special_purpose_registers[i].comps_enum;
+			tOp->u.comps_enum = special_purpose_registers[i].comps_enum;
 
 		v.insert(v.begin(), tOp->op);
 		return true;
@@ -365,53 +366,53 @@ static vector<DWORD> assembleOp(string s, bool special = false);
 
 static vector<DWORD> assemble_cbvox_operand(string &s, vector<DWORD> &v, token_operand *tOp, bool special, DWORD num)
 {
-	tOp->num_indices = 2;
+	tOp->u.num_indices = 2;
 	if (s[0] == 'x') { // Indexable temp array
-		tOp->file = 3;
+		tOp->u.file = 3;
 		s.erase(s.begin());
 	} else if (s[0] == 'o') { // Output register
-		tOp->file = 2;
-		tOp->num_indices = 1;
+		tOp->u.file = 2;
+		tOp->u.num_indices = 1;
 		s.erase(s.begin());
 	} else if (s[0] == 'v') { // Input register
-		tOp->file = 1;
+		tOp->u.file = 1;
 		if (s.size() > 4 && s[1] == 'i' && s[2] == 'c' && s[3] == 'p')  { // Hull shader vicp
-			tOp->file = 0x19;
+			tOp->u.file = 0x19;
 			s.erase(s.begin());
 			s.erase(s.begin());
 			s.erase(s.begin());
 		} else if (s.size() > 4 && s[1] == 'o' && s[2] == 'c' && s[3] == 'p') { // Hull shader vocp
-			tOp->file = 0x1A;
+			tOp->u.file = 0x1A;
 			s.erase(s.begin());
 			s.erase(s.begin());
 			s.erase(s.begin());
 		} else if (s[1] == 'p' && s[2] == 'c') { // Patch constant
-			tOp->file = 0x1B;
+			tOp->u.file = 0x1B;
 			s.erase(s.begin());
 			s.erase(s.begin());
 		}
 		s.erase(s.begin());
-		tOp->num_indices = 1;
+		tOp->u.num_indices = 1;
 		size_t start = s.find("][");
 		if (start != string::npos) {
-			size_t end = s.find("]", start + 1);
-			string index0 = s.substr(s.find("[") + 1, start - 1);
+			size_t end = s.find(']', start + 1);
+			string index0 = s.substr(s.find('[') + 1, start - 1);
 			string index1 = s.substr(start + 2, end - start - 2);
-			if (index0.find("+") != string::npos) {
+			if (index0.find('+') != string::npos) {
 				string sReg = index0.substr(0, index0.find(" + "));
 				string sAdd = index0.substr(index0.find(" + ") + 3);
 				vector<DWORD> reg = assembleOp(sReg);
-				tOp->num_indices = 2;
-				tOp->index0_repr = 2;
+				tOp->u.num_indices = 2;
+				tOp->u.index0_repr = 2;
 				int iAdd = atoi(sAdd.c_str());
-				if (iAdd) tOp->index0_repr = 3;
-				if (index1.find("+") != string::npos) {
+				if (iAdd) tOp->u.index0_repr = 3;
+				if (index1.find('+') != string::npos) {
 					string sReg2 = index1.substr(0, index1.find(" + "));
 					string sAdd2 = index1.substr(index1.find(" + ") + 3);
 					vector<DWORD> reg2 = assembleOp(sReg2);
-					tOp->index1_repr = 2;
+					tOp->u.index1_repr = 2;
 					int iAdd2 = atoi(sAdd.c_str());
-					if (iAdd2) tOp->index1_repr = 3;
+					if (iAdd2) tOp->u.index1_repr = 3;
 					string swizzle = s.substr(s.find("].") + 2);
 					handleSwizzle(swizzle, tOp);
 					v.insert(v.begin(), tOp->op);
@@ -432,7 +433,7 @@ static vector<DWORD> assemble_cbvox_operand(string &s, vector<DWORD> &v, token_o
 				v.push_back(atoi(index1.c_str()));
 				return v;
 			}
-			tOp->num_indices = 2;
+			tOp->u.num_indices = 2;
 			string swizzle = s.substr(s.find('.') + 1);
 			handleSwizzle(swizzle, tOp, special);
 			v.insert(v.begin(), tOp->op);
@@ -441,19 +442,19 @@ static vector<DWORD> assemble_cbvox_operand(string &s, vector<DWORD> &v, token_o
 			return v;
 		}
 	} else if (s[0] == 'i') { // Immediate Constant Buffer
-		tOp->file = 9;
+		tOp->u.file = 9;
 		s.erase(s.begin());
 		s.erase(s.begin());
 		s.erase(s.begin());
-		tOp->num_indices = 1;
+		tOp->u.num_indices = 1;
 	} else { // Constant buffer
-		tOp->file = 8;
+		tOp->u.file = 8;
 		s.erase(s.begin());
 		s.erase(s.begin());
 	}
 	string sNum;
 	bool hasIndex = false;
-	if (s.find("[") < s.size()) {
+	if (s.find('[') < s.size()) {
 		sNum = s.substr(0, s.find('['));
 		hasIndex = true;
 	} else {
@@ -478,14 +479,14 @@ static vector<DWORD> assemble_cbvox_operand(string &s, vector<DWORD> &v, token_o
 			if (idx != 0) {
 				v.push_back(idx);
 				if (sNum.size() > 0)
-					tOp->index1_repr = 3; // Reg + imm
+					tOp->u.index1_repr = 3; // Reg + imm
 				else
-					tOp->index0_repr = 3; // Reg + imm
+					tOp->u.index0_repr = 3; // Reg + imm
 			} else {
 				if (sNum.size() > 0)
-					tOp->index1_repr = 2; // Reg;
+					tOp->u.index1_repr = 2; // Reg;
 				else
-					tOp->index0_repr = 2; // Reg;
+					tOp->u.index0_repr = 2; // Reg;
 			}
 			for (DWORD i = 0; i < reg.size(); i++) {
 				v.push_back(reg[i]);
@@ -502,8 +503,8 @@ static vector<DWORD> assemble_cbvox_operand(string &s, vector<DWORD> &v, token_o
 		if (s.find('.') < s.size()) {
 			handleSwizzle(s.substr(s.find('.') + 1), tOp, special);
 		} else {
-			tOp->mode = 1; // Swizzle
-			tOp->sel = 0xE4;
+			tOp->u.mode = 1; // Swizzle
+			tOp->u.sel = 0xE4;
 		}
 		v.insert(v.begin(), tOp->op);
 		return v;
@@ -517,30 +518,30 @@ static vector<DWORD> assemble_cbvox_operand(string &s, vector<DWORD> &v, token_o
 
 static vector<DWORD> assemble_literal_operand(string &s, vector<DWORD> &v, token_operand *tOp)
 {
-	tOp->file = 4;
+	tOp->u.file = 4;
 	s.erase(s.begin());
-	if (s.find(",") < s.size()) {
+	if (s.find(',') < s.size()) {
 		s.erase(s.begin());
-		string s1 = s.substr(0, s.find(","));
-		s = s.substr(s.find(",") + 1);
+		string s1 = s.substr(0, s.find(','));
+		s = s.substr(s.find(',') + 1);
 		if (s[0] == ' ')
 			s.erase(s.begin());
-		string s2 = s.substr(0, s.find(","));
-		s = s.substr(s.find(",") + 1);
+		string s2 = s.substr(0, s.find(','));
+		s = s.substr(s.find(',') + 1);
 		if (s[0] == ' ')
 			s.erase(s.begin());
-		string s3 = s.substr(0, s.find(","));
-		s = s.substr(s.find(",") + 1);
+		string s3 = s.substr(0, s.find(','));
+		s = s.substr(s.find(',') + 1);
 		if (s[0] == ' ')
 			s.erase(s.begin());
-		string s4 = s.substr(0, s.find(")"));
+		string s4 = s.substr(0, s.find(')'));
 
 		v.push_back(strToDWORD(s1));
 		v.push_back(strToDWORD(s2));
 		v.push_back(strToDWORD(s3));
 		v.push_back(strToDWORD(s4));
 	} else {
-		tOp->comps_enum = 1; // 1
+		tOp->u.comps_enum = 1; // 1
 		s.erase(s.begin());
 		s.pop_back();
 		v.push_back(strToDWORD(s));
@@ -579,11 +580,11 @@ static vector<DWORD> assemble_double_operand(string &s, vector<DWORD> &v, token_
 	// So we need a special case to handle 64bit hex values split into two
 	// 32bit components.
 
-	tOp->file = 5; // Double
-	tOp->comps_enum = 2; // Use 4 components (until proven otherwise)
+	tOp->u.file = 5; // Double
+	tOp->u.comps_enum = 2; // Use 4 components (until proven otherwise)
 	v.push_back(tOp->op);
 
-	size_t comma = s.find(",", 2);
+	size_t comma = s.find(',', 2);
 	if (comma == string::npos)
 		throw AssemblerParseError(s, "Double literal string missing 2nd value");
 
@@ -592,13 +593,13 @@ static vector<DWORD> assemble_double_operand(string &s, vector<DWORD> &v, token_
 	// doesn't need special handling since it scans until the closing
 	// bracket and will therefore naturally include the 4th component:
 	if (!s.compare(2, 2, "0x")) {
-		comma = s.find(",", comma + 1);
-		if (comma == string::npos || s.find(",", comma + 1) == string::npos)
+		comma = s.find(',', comma + 1);
+		if (comma == string::npos || s.find(',', comma + 1) == string::npos)
 			throw AssemblerParseError(s, "Double literal hex string with less components than expected");
 	}
 
 	string s1 = s.substr(2, comma - 2);
-	string s2 = s.substr(comma + 1, s.find(")", comma) - comma - 1);
+	string s2 = s.substr(comma + 1, s.find(')', comma) - comma - 1);
 	if (s2[0] == ' ')
 		s2.erase(s2.begin());
 
@@ -633,7 +634,7 @@ static DWORD encode_min_precision_type(const char *type)
 	return 0;
 }
 
-static void parse_min_precision_tag(string &s, vector<DWORD> &v, token_operand *tOp, DWORD *ext)
+static void parse_min_precision_tag(string &s, vector<DWORD> & /*v*/, token_operand *tOp, DWORD *ext)
 {
 	size_t tag;
 
@@ -668,7 +669,7 @@ static void parse_min_precision_tag(string &s, vector<DWORD> &v, token_operand *
 
 	DWORD type1 = encode_min_precision_type(s.c_str() + tag + 1);
 	if (type1) {
-		tOp->extended = 1;
+		tOp->u.extended = 1;
 		*ext |= 0x00000001;
 		*ext |= type1;
 	}
@@ -689,7 +690,10 @@ static vector<DWORD> assembleOp(string s, bool special)
 	DWORD index = 0;
 	DWORD value = 0;
 	token_operand* tOp = (token_operand*)&op;
-	tOp->comps_enum = 2; // 4
+	tOp->u.comps_enum = 2; // 4
+	
+	(void)index; // unused variable
+	(void)value; // unused variable
 
 	num = atoi(s.c_str());
 	if (num != 0) {
@@ -698,13 +702,13 @@ static vector<DWORD> assembleOp(string s, bool special)
 	}
 	if (s[0] == '-') {
 		s.erase(s.begin());
-		tOp->extended = 1;
+		tOp->u.extended = 1;
 		ext |= 0x41;
 	}
 	if (s[0] == '|') {
 		s.erase(s.begin());
 		s.erase(s.end() - 1);
-		tOp->extended = 1;
+		tOp->u.extended = 1;
 		ext |= 0x81;
 	}
 
@@ -728,18 +732,18 @@ static vector<DWORD> assembleOp(string s, bool special)
 	// tag as a secondary measure (either would be sufficient by itself):
 	parse_min_precision_tag(s, v, tOp, &ext);
 
-	if (tOp->extended)
+	if (tOp->u.extended)
 		v.push_back(ext);
 
 	if (assemble_special_purpose_register(s, v, tOp, special))
 		return v;
 
-	if (s[0] == 'i' && s[1] == 'c' && s[2] == 'b'
-	 || s[0] == 'c' && s[1] == 'b'
-	 || s[0] == 'C' && s[1] == 'B' // Compatibility with d3dcompiler_47 disassembly -DarkStarSword
-	 || s[0] == 'x'
-	 || s[0] == 'o'
-	 || s[0] == 'v') {
+	if ((s[0] == 'i' && s[1] == 'c' && s[2] == 'b')
+	 || (s[0] == 'c' && s[1] == 'b')
+	 || (s[0] == 'C' && s[1] == 'B') // Compatibility with d3dcompiler_47 disassembly -DarkStarSword
+	 ||  s[0] == 'x'
+	 ||  s[0] == 'o'
+	 ||  s[0] == 'v') {
 		return assemble_cbvox_operand(s, v, tOp, special, num);
 	}
 
@@ -750,22 +754,22 @@ static vector<DWORD> assembleOp(string s, bool special)
 		return assemble_double_operand(s, v, tOp);
 
 	if (s[0] == 'r') {
-		tOp->file = 0;
+		tOp->u.file = 0;
 	} else if (s[0] == 's') {
-		tOp->file = 6;
+		tOp->u.file = 6;
 	} else if (s[0] == 't') {
-		tOp->file = 7;
+		tOp->u.file = 7;
 	} else if (s[0] == 'g') {
-		tOp->file = 0x1F;
+		tOp->u.file = 0x1F;
 	} else if (s[0] == 'u') {
-		tOp->file = 0x1E;
+		tOp->u.file = 0x1E;
 	} else if (s[0] == 'm')
-		tOp->file = 0x10;
+		tOp->u.file = 0x10;
 	else
 		throw AssemblerParseError(s, "Unrecognised operand");
 
 	s.erase(s.begin());
-	tOp->num_indices = 1;
+	tOp->u.num_indices = 1;
 	num = atoi(s.substr(0, s.find('.')).c_str());
 	v.push_back(num);
 	if (s.find('.') < s.size()) {
@@ -851,7 +855,7 @@ static vector<string> strToWords(string s)
 	return words;
 }
 
-static DWORD parseAoffimmi(DWORD start, string o)
+static DWORD parseAoffimmi(DWORD start, const string& o)
 {
 	string nums = o.substr(1, o.size() - 2);
 	int n1 = atoi(nums.substr(0, nums.find(',')).c_str());
@@ -1417,9 +1421,9 @@ static string translate_string_operand(string &in)
 // shader when the debug layer is enabled, potentially making them quite valuable
 static vector<DWORD> assemble_printf(string &s, vector<DWORD> &v, vector<string> &w, bool errorf)
 {
-	shader_ins ins = {0};
-	ins.opcode = 0x35;
-	ins._11_23 = 0x4;
+	shader_ins ins = {};
+	ins.u.opcode = 0x35;
+	ins.u._11_23 = 0x4;
 	v.push_back(ins.op);
 
 	uint32_t insLen = 0;
@@ -1488,7 +1492,7 @@ static vector<DWORD> assembleIns(string s)
 	shader_ins* ins = (shader_ins*)&op;
 	size_t pos = s.find("[precise");
 	if (pos != string::npos) {
-		size_t endPos = s.find("]", pos) + 1;
+		size_t endPos = s.find(']', pos) + 1;
 		string precise = s.substr(pos, endPos - pos);
 		s.erase(pos, endPos - pos);
 		int x = 0;
@@ -1501,21 +1505,21 @@ static vector<DWORD> assembleIns(string s)
 			z = 1024;
 			w = 2048;
 		}
-		if (precise.find("x") != string::npos)
+		if (precise.find('x') != string::npos)
 			x = 256;
-		if (precise.find("y") != string::npos)
+		if (precise.find('y') != string::npos)
 			y = 512;
-		if (precise.find("z") != string::npos)
+		if (precise.find('z') != string::npos)
 			z = 1024;
-		if (precise.find("w") != string::npos)
+		if (precise.find('w') != string::npos)
 			w = 2048;
-		ins->_11_23 = x | y | z | w;
+		ins->u._11_23 = x | y | z | w;
 	}
 	// Handles _uint variant of resinfo instruction:
 	pos = s.find("_uint");
 	if (pos != string::npos) {
 		s.erase(pos, 5);
-		ins->_11_23 = 2;
+		ins->u._11_23 = 2;
 	}
 	// resinfo_rcpfloat partially verified - assembled & disassembled OK,
 	// but did not check against compiled shader as HLSL lacks an intrinsic
@@ -1526,16 +1530,16 @@ static vector<DWORD> assembleIns(string s)
 	pos = s.find("_rcpfloat");
 	if (pos != string::npos) {
 		s.erase(pos, 9);
-		ins->_11_23 = 1;
+		ins->u._11_23 = 1;
 	}
 	vector<DWORD> v;
 	vector<string> w = strToWords(s);
 	string o = w[0];
-	if (o == "sampleinfo" && ins->_11_23 == 2)
-		ins->_11_23 = 1;
+	if (o == "sampleinfo" && ins->u._11_23 == 2)
+		ins->u._11_23 = 1;
 	if (s.find("_opc") < s.size()) {
 		o = o.substr(0, o.find("_opc"));
-		ins->_11_23 = 4096;
+		ins->u._11_23 = 4096;
 	}
 	bool bNZ = o.find("_nz") < o.size();
 	bool bZ = o.find("_z") < o.size();
@@ -1546,23 +1550,23 @@ static vector<DWORD> assembleIns(string s)
 
 	if (o == "hs_decls") {
 		check_num_ops(s, w, 0);
-		ins->opcode = 0x71;
-		ins->length = 1;
+		ins->u.opcode = 0x71;
+		ins->u.length = 1;
 		v.push_back(op);
 	} else if (o == "hs_fork_phase") {
 		check_num_ops(s, w, 0);
-		ins->opcode = 0x73;
-		ins->length = 1;
+		ins->u.opcode = 0x73;
+		ins->u.length = 1;
 		v.push_back(op);
 	} else if (o == "hs_join_phase") {
 		check_num_ops(s, w, 0);
-		ins->opcode = 0x74;
-		ins->length = 1;
+		ins->u.opcode = 0x74;
+		ins->u.length = 1;
 		v.push_back(op);
 	} else if (o == "hs_control_point_phase") {
 		check_num_ops(s, w, 0);
-		ins->opcode = 0x72;
-		ins->length = 1;
+		ins->u.opcode = 0x72;
+		ins->u.length = 1;
 		v.push_back(op);
 	} else if (o.substr(0, 3) == "ps_") {
 		check_num_ops(s, w, 0);
@@ -1601,25 +1605,25 @@ static vector<DWORD> assembleIns(string s)
 		op |= atoi(o.substr(5, 1).c_str());
 		v.push_back(op);
 	} else if (w[0].substr(0, 4) == "sync") {
-		ins->opcode = 0xbe;
+		ins->u.opcode = 0xbe;
 		check_num_ops(s, w, 0);
-		ins->_11_23 = parseSyncFlags(&w[0]);
-		ins->length = 1;
+		ins->u._11_23 = parseSyncFlags(&w[0]);
+		ins->u.length = 1;
 		v.push_back(op);
 	} else if (w[0] == "store_uav_typed") {
-		ins->opcode = 0x86;
+		ins->u.opcode = 0x86;
 		int numOps = 3;
 		check_num_ops(s, w, numOps);
 		if (w[1][0] == 'u') {
-			ins->opcode = 0xa4;
+			ins->u.opcode = 0xa4;
 		}
-		vector<vector<DWORD>> Os;
+		vector<vector<DWORD>> Os(3);
 		int numSpecial = 1;
 		for (int i = 0; i < numOps; i++)
 			Os.push_back(assembleOp(w[i + 1], i < numSpecial));
-		ins->length = 1;
+		ins->u.length = 1;
 		for (int i = 0; i < numOps; i++)
-			ins->length += (int)Os[i].size();
+			ins->u.length += (int)Os[i].size();
 		v.push_back(op);
 		for (int i = 0; i < numOps; i++)
 			v.insert(v.end(), Os[i].begin(), Os[i].end());
@@ -1627,41 +1631,41 @@ static vector<DWORD> assembleIns(string s)
 		vector<int> vIns = insMap[o];
 		int numOps = vIns[0];
 		check_num_ops(s, w, numOps);
-		vector<vector<DWORD>> Os;
+		vector<vector<DWORD>> Os(numOps);
 		int numSpecial = 1;
 		if (vIns.size() > 2)
 			numSpecial = vIns[2];
 		for (int i = 0; i < numOps; i++)
 			Os.push_back(assembleOp(w[i + 1], i < numSpecial));
-		ins->opcode = vIns[1];
+		ins->u.opcode = vIns[1];
 		if (bSat)
-			ins->_11_23 |= 0x04;
+			ins->u._11_23 |= 0x04;
 		if (bNZ)
-			ins->_11_23 |= 0x80;
+			ins->u._11_23 |= 0x80;
 		if (bZ)
-			ins->_11_23 |= 0x00;
+			ins->u._11_23 |= 0x00;
 		if (bGlc)
-			ins->_11_23 |= 0x20;
-		ins->length = 1;
+			ins->u._11_23 |= 0x20;
+		ins->u.length = 1;
 		for (int i = 0; i < numOps; i++)
-			ins->length += (int)Os[i].size();
+			ins->u.length += (int)Os[i].size();
 		v.push_back(op);
 		for (int i = 0; i < numOps; i++)
 			v.insert(v.end(), Os[i].begin(), Os[i].end());
 	} else if (ldMap.find(o) != ldMap.end()) {
 		vector<int> vIns = ldMap[o];
 		int numOps = vIns[0];
-		vector<vector<DWORD>> Os;
+		vector<vector<DWORD>> Os(numOps);
 		int startPos = 1 + (vIns[2] & 3);
 		//startPos = w.size() - numOps;
 		check_num_ops(s, w, startPos + numOps - 1);
 		for (int i = 0; i < numOps; i++)
 			Os.push_back(assembleOp(w[i + startPos], i == 0));
-		ins->opcode = vIns[1];
-		ins->length = 1 + (vIns[2] & 3);
-		ins->extended = 1;
+		ins->u.opcode = vIns[1];
+		ins->u.length = 1 + (vIns[2] & 3);
+		ins->u.extended = 1;
 		for (int i = 0; i < numOps; i++)
-			ins->length += (int)Os[i].size();
+			ins->u.length += (int)Os[i].size();
 		v.push_back(op);
 		if (vIns[2] == 3)
 			v.push_back(parseAoffimmi(0x80000001, w[1]));
@@ -1723,8 +1727,8 @@ static vector<DWORD> assembleIns(string s)
 	} else if (o == "dcl_input") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1], 1);
-		ins->opcode = 0x5f;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x5f;
+		ins->u.length = 1 + os.size();
 		// Should sort special value for text constants.
 		if ((os[0] & 0xFF0) == 0)
 			os[0] -= 1;
@@ -1733,198 +1737,198 @@ static vector<DWORD> assembleIns(string s)
 	} else if (o == "dcl_output") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1], 1);
-		ins->opcode = 0x65;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x65;
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_resource_raw") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0xa1;
-		ins->length = 3;
+		ins->u.opcode = 0xa1;
+		ins->u.length = 3;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_resource_buffer") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 1;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 1;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texture1d") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 2;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 2;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texture1darray") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 7;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 7;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_uav_typed_texture1d") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x9c;
-		ins->_11_23 = 2;
+		ins->u.opcode = 0x9c;
+		ins->u._11_23 = 2;
 		if (bGlc)
-			ins->_11_23 |= 0x20;
-		ins->length = 4;
+			ins->u._11_23 |= 0x20;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_uav_typed_texture1darray") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x9c;
-		ins->_11_23 = 7;
+		ins->u.opcode = 0x9c;
+		ins->u._11_23 = 7;
 		if (bGlc)
-			ins->_11_23 |= 0x20;
-		ins->length = 4;
+			ins->u._11_23 |= 0x20;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texture2d") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 3;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 3;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_uav_typed_buffer") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x9c;
-		ins->_11_23 = 1;
+		ins->u.opcode = 0x9c;
+		ins->u._11_23 = 1;
 		if (bGlc)
-			ins->_11_23 |= 0x20;
-		ins->length = 4;
+			ins->u._11_23 |= 0x20;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texture3d") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 5;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 5;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_uav_typed_texture3d") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x9c;
-		ins->_11_23 = 5;
+		ins->u.opcode = 0x9c;
+		ins->u._11_23 = 5;
 		if (bGlc)
-			ins->_11_23 |= 0x20;
-		ins->length = 4;
+			ins->u._11_23 |= 0x20;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texturecube") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 6;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 6;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texturecubearray") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 10;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 10;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texture2darray") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x58;
-		ins->_11_23 = 8;
-		ins->length = 4;
+		ins->u.opcode = 0x58;
+		ins->u._11_23 = 8;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_uav_typed_texture2d") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x9c;
-		ins->_11_23 = 3;
+		ins->u.opcode = 0x9c;
+		ins->u._11_23 = 3;
 		if (bGlc)
-			ins->_11_23 |= 0x20;
-		ins->length = 4;
+			ins->u._11_23 |= 0x20;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_uav_typed_texture2darray") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[2]);
-		ins->opcode = 0x9c;
-		ins->_11_23 = 8;
+		ins->u.opcode = 0x9c;
+		ins->u._11_23 = 8;
 		if (bGlc)
-			ins->_11_23 |= 0x20;
-		ins->length = 4;
+			ins->u._11_23 |= 0x20;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[1], &v);
 	} else if (o == "dcl_resource_texture2dms") {
 		check_num_ops(s, w, 3);
 		vector<DWORD> os = assembleOp(w[3]);
-		ins->opcode = 0x58;
+		ins->u.opcode = 0x58;
 		// Changed this to calculate the value rather than hard coding
 		// a small handful of values that we've seen. -DarkStarSword
 		sscanf_s(w[1].c_str(), "(%d)", &msaa_samples);
-		ins->_11_23 = (msaa_samples << 5) | 4;
-		ins->length = 4;
+		ins->u._11_23 = (msaa_samples << 5) | 4;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[2], &v);
 	} else if (o == "dcl_resource_texture2dmsarray") {
 		check_num_ops(s, w, 3);
 		vector<DWORD> os = assembleOp(w[3]);
-		ins->opcode = 0x58;
+		ins->u.opcode = 0x58;
 		// Changed this to calculate the value rather than hard coding
 		// a small handful of values that we've seen. -DarkStarSword
 		sscanf_s(w[1].c_str(), "(%d)", &msaa_samples);
-		ins->_11_23 = (msaa_samples << 5) | 9;
-		ins->length = 4;
+		ins->u._11_23 = (msaa_samples << 5) | 9;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		assembleResourceDeclarationType(&w[2], &v);
 	} else if (o == "dcl_indexrange") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[1], true);
-		ins->opcode = 0x5b;
-		ins->length = 2 + os.size();
+		ins->u.opcode = 0x5b;
+		ins->u.length = 2 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		v.push_back(atoi(w[2].c_str()));
 	} else if (o == "dcl_temps") {
-		ins->opcode = 0x68;
-		ins->length = 2;
+		ins->u.opcode = 0x68;
+		ins->u.length = 2;
 		v.push_back(op);
 		check_num_ops(s, w, 1);
 		v.push_back(atoi(w[1].c_str()));
 	} else if (o == "dcl_resource_structured") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0xa2;
-		ins->length = 4;
+		ins->u.opcode = 0xa2;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 		v.push_back(atoi(w[2].c_str()));
@@ -1932,21 +1936,21 @@ static vector<DWORD> assembleIns(string s)
 		check_num_ops(s, w, 1, 2);
 		vector<DWORD> os = assembleOp(w[1]);
 		os[0] = 0x106000;
-		ins->opcode = 0x5a;
+		ins->u.opcode = 0x5a;
 		if (w.size() > 2) {
 			if (w[2] == "mode_default") {
-				ins->_11_23 = 0;
+				ins->u._11_23 = 0;
 			} else if (w[2] == "mode_comparison") {
-				ins->_11_23 = 1;
+				ins->u._11_23 = 1;
 			}
 		}
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_globalFlags") {
-		ins->opcode = 0x6a;
-		ins->length = 1;
-		ins->_11_23 = 0;
+		ins->u.opcode = 0x6a;
+		ins->u.length = 1;
+		ins->u._11_23 = 0;
 		for (unsigned i = 1; i < w.size(); i += 2) {
 			// Changed this to use a loop rather than parsing a
 			// fixed number of arguments. Added double precision,
@@ -1958,36 +1962,36 @@ static vector<DWORD> assembleIns(string s)
 			// FIXME: Missing D3D_SHADER_REQUIRES_TILED_RESOURCES
 			//   - https://docs.microsoft.com/en-gb/windows/desktop/api/d3d11shader/nf-d3d11shader-id3d11shaderreflection-getrequiresflags
 			//   -DarkStarSword
-			string s = w[i];
+			const string& s = w[i];
 			if (s == "refactoringAllowed")
-				ins->_11_23 |= 0x01;
+				ins->u._11_23 |= 0x01;
 			if (s == "enableDoublePrecisionFloatOps")
-				ins->_11_23 |= 0x02;
+				ins->u._11_23 |= 0x02;
 			if (s == "forceEarlyDepthStencil")
-				ins->_11_23 |= 0x04;
+				ins->u._11_23 |= 0x04;
 			if (s == "enableRawAndStructuredBuffers")
-				ins->_11_23 |= 0x08;
+				ins->u._11_23 |= 0x08;
 			if (s == "skipOptimization")
-				ins->_11_23 |= 0x10;
+				ins->u._11_23 |= 0x10;
 			if (s == "enableMinimumPrecision")
-				ins->_11_23 |= 0x20;
+				ins->u._11_23 |= 0x20;
 			if (s == "enable11_1DoubleExtensions")
-				ins->_11_23 |= 0x40;
+				ins->u._11_23 |= 0x40;
 			if (s == "enable11_1ShaderExtensions")
-				ins->_11_23 |= 0x80;
+				ins->u._11_23 |= 0x80;
 		}
 		v.push_back(op);
 	} else if (o == "dcl_constantbuffer") {
 		check_num_ops(s, w, 1, 2);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x59;
+		ins->u.opcode = 0x59;
 		if (w.size() > 2) {
 			if (w[2] == "dynamicIndexed")
-				ins->_11_23 = 1;
+				ins->u._11_23 = 1;
 			else if (w[2] == "immediateIndexed")
-				ins->_11_23 = 0;
+				ins->u._11_23 = 0;
 		}
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_output_sgv") {
@@ -1995,43 +1999,43 @@ static vector<DWORD> assembleIns(string s)
 		// geometry shader. -DarkStarSword
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[1], true);
-		ins->opcode = 0x66;
+		ins->u.opcode = 0x66;
 		assembleSystemValue(&w[2], &os);
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_output_siv") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[1], true);
-		ins->opcode = 0x67;
+		ins->u.opcode = 0x67;
 		assembleSystemValue(&w[2], &os);
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_input_siv") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[1], true);
-		ins->opcode = 0x61;
+		ins->u.opcode = 0x61;
 		assembleSystemValue(&w[2], &os);
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_input_sgv") {
 		check_num_ops(s, w, 2);
 		vector<DWORD> os = assembleOp(w[1], true);
-		ins->opcode = 0x60;
+		ins->u.opcode = 0x60;
 		assembleSystemValue(&w[2], &os);
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_input_ps") {
 		vector<DWORD> os;
-		ins->opcode = 0x62;
+		ins->u.opcode = 0x62;
 		// Switched to use common interpolation mode parsing to catch
 		// more variants -DarkStarSword
-		ins->_11_23 = interpolationMode(w, 0); // FIXME: Default?
+		ins->u._11_23 = interpolationMode(w, 0); // FIXME: Default?
 		os = assembleOp(w[w.size() - 1], true);
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_input_ps_sgv") {
@@ -2043,25 +2047,25 @@ static vector<DWORD> assembleIns(string s)
 		//   -DarkStarSword
 		check_num_ops(s, w, 2, 5);
 		vector<DWORD> os = assembleOp(w[w.size() - 2], true);
-		ins->opcode = 0x63;
-		ins->_11_23 = interpolationMode(w, 1);
+		ins->u.opcode = 0x63;
+		ins->u._11_23 = interpolationMode(w, 1);
 		if (w.size() > 2)
 			assembleSystemValue(&w[w.size() - 1], &os);
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_input_ps_siv") {
 		vector<DWORD> os;
-		ins->opcode = 0x64;
+		ins->u.opcode = 0x64;
 		// Switched to use common interpolation mode parsing (fixes
 		// missing linear noperspective sample case in WATCH_DOGS2) and
 		// system value parsing (fixes missing viewport_array_index)
 		//   -DarkStarSword
 		check_num_ops(s, w, 2, 5);
-		ins->_11_23 = interpolationMode(w, 0); // FIXME: Default?
+		ins->u._11_23 = interpolationMode(w, 0); // FIXME: Default?
 		os = assembleOp(w[w.size() - 2], true);
 		assembleSystemValue(&w[w.size() - 1], &os);
-		ins->length = 1 + os.size();
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_indexableTemp") {
@@ -2070,17 +2074,17 @@ static vector<DWORD> assembleIns(string s)
 		string s2 = s1.substr(0, s1.find('['));
 		string s3 = s1.substr(s1.find('[') + 1);
 		s3.erase(s3.end() - 1, s3.end());
-		ins->opcode = 0x69;
-		ins->length = 4;
+		ins->u.opcode = 0x69;
+		ins->u.length = 4;
 		v.push_back(op);
 		v.push_back(atoi(s2.c_str()));
 		v.push_back(atoi(s3.c_str()));
 		v.push_back(atoi(w[2].c_str()));
 	} else if (o == "dcl_immediateConstantBuffer") {
 		vector<DWORD> os;
-		ins->opcode = 0x35;
-		ins->_11_23 = 3;
-		ins->length = 0;
+		ins->u.opcode = 0x35;
+		ins->u._11_23 = 3;
+		ins->u.length = 0;
 		DWORD length = 2;
 		DWORD offset = 3;
 		// The modulus here is by 5, matching the below offset += 5
@@ -2106,65 +2110,65 @@ static vector<DWORD> assembleIns(string s)
 		v.push_back(length);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_tessellator_partitioning") {
-		ins->opcode = 0x96;
-		ins->length = 1;
+		ins->u.opcode = 0x96;
+		ins->u.length = 1;
 		check_num_ops(s, w, 1);
 		if (w[1] == "partitioning_integer")
-			ins->_11_23 = 1;
+			ins->u._11_23 = 1;
 		else if (w[1] == "partitioning_pow2")
-			ins->_11_23 = 2;
+			ins->u._11_23 = 2;
 		else if (w[1] == "partitioning_fractional_odd")
-			ins->_11_23 = 3;
+			ins->u._11_23 = 3;
 		else if (w[1] == "partitioning_fractional_even")
-			ins->_11_23 = 4;
+			ins->u._11_23 = 4;
 		// Added pow2 -DarkStarSword
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/ff471446(v=vs.85).aspx
 		v.push_back(op);
 	} else if (o == "dcl_tessellator_output_primitive") {
-		ins->opcode = 0x97;
-		ins->length = 1;
+		ins->u.opcode = 0x97;
+		ins->u.length = 1;
 		check_num_ops(s, w, 1);
 		if (w[1] == "output_point")
-			ins->_11_23 = 1;
+			ins->u._11_23 = 1;
 		else if (w[1] == "output_line")
-			ins->_11_23 = 2;
+			ins->u._11_23 = 2;
 		else if (w[1] == "output_triangle_cw")
-			ins->_11_23 = 3;
+			ins->u._11_23 = 3;
 		else if (w[1] == "output_triangle_ccw")
-			ins->_11_23 = 4;
+			ins->u._11_23 = 4;
 		// Added output_point -DarkStarSword
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/ff471445(v=vs.85).aspx
 		v.push_back(op);
 	} else if (o == "dcl_tessellator_domain") {
-		ins->opcode = 0x95;
-		ins->length = 1;
+		ins->u.opcode = 0x95;
+		ins->u.length = 1;
 		check_num_ops(s, w, 1);
 		if (w[1] == "domain_isoline")
-			ins->_11_23 = 1;
+			ins->u._11_23 = 1;
 		else if (w[1] == "domain_tri")
-			ins->_11_23 = 2;
+			ins->u._11_23 = 2;
 		else if (w[1] == "domain_quad")
-			ins->_11_23 = 3;
+			ins->u._11_23 = 3;
 		v.push_back(op);
 	} else if (o == "dcl_stream") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x8f;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x8f;
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "emit_stream") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x75;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x75;
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "cut_stream") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x76;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x76;
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "emit_then_cut_stream") {
@@ -2173,80 +2177,80 @@ static vector<DWORD> assembleIns(string s)
 		//   -DarkStarSword
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x77;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x77;
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_outputtopology") {
-		ins->opcode = 0x5c;
-		ins->length = 1;
+		ins->u.opcode = 0x5c;
+		ins->u.length = 1;
 		check_num_ops(s, w, 1);
 		if (w[1] == "pointlist")
-			ins->_11_23 = 1;
+			ins->u._11_23 = 1;
 		else if (w[1] == "trianglestrip")
-			ins->_11_23 = 5;
+			ins->u._11_23 = 5;
 		else if (w[1] == "linestrip")
-			ins->_11_23 = 3;
+			ins->u._11_23 = 3;
 		// Added point list -DarkStarSword
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/bb509661(v=vs.85).aspx
 		v.push_back(op);
 	} else if (o == "dcl_output_control_point_count") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x94;
-		ins->_11_23 = os[0];
-		ins->length = 1;
+		ins->u.opcode = 0x94;
+		ins->u._11_23 = os[0];
+		ins->u.length = 1;
 		v.push_back(op);
 	} else if (o == "dcl_input_control_point_count") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x93;
-		ins->_11_23 = os[0];
-		ins->length = 1;
+		ins->u.opcode = 0x93;
+		ins->u._11_23 = os[0];
+		ins->u.length = 1;
 		v.push_back(op);
 	} else if (o == "dcl_maxout") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x5e;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x5e;
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "dcl_inputprimitive") {
-		ins->opcode = 0x5d;
-		ins->length = 1;
+		ins->u.opcode = 0x5d;
+		ins->u.length = 1;
 		check_num_ops(s, w, 1);
 		if (w[1] == "point")
-			ins->_11_23 = 1;
+			ins->u._11_23 = 1;
 		else if (w[1] == "line")
-			ins->_11_23 = 2;
+			ins->u._11_23 = 2;
 		else if (w[1] == "triangle")
-			ins->_11_23 = 3;
+			ins->u._11_23 = 3;
 		else if (w[1] == "lineadj")
-			ins->_11_23 = 6;
+			ins->u._11_23 = 6;
 		else if (w[1] == "triangleadj")
-			ins->_11_23 = 7;
+			ins->u._11_23 = 7;
 		// Added "lineadj" -DarkStarSword
 		// https://msdn.microsoft.com/en-us/library/windows/desktop/bb509609(v=vs.85).aspx
 		v.push_back(op);
 	} else if (o == "dcl_hs_max_tessfactor") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x98;
-		ins->length = 1 + os.size() - 1;
+		ins->u.opcode = 0x98;
+		ins->u.length = 1 + os.size() - 1;
 		v.push_back(op);
 		v.insert(v.end(), os.begin() + 1, os.end());
 	} else if (o == "dcl_hs_fork_phase_instance_count") {
 		check_num_ops(s, w, 1);
 		vector<DWORD> os = assembleOp(w[1]);
-		ins->opcode = 0x99;
-		ins->length = 1 + os.size();
+		ins->u.opcode = 0x99;
+		ins->u.length = 1 + os.size();
 		v.push_back(op);
 		v.insert(v.end(), os.begin(), os.end());
 	} else if (o == "samplepos") {
 		// samplepos can either be used with a texture register, or the
 		// rasterizer. In the former case it has an extra 0 appended.
-		vector<vector<DWORD>> os;
-		ins->opcode = 0x6e;
+		vector<vector<DWORD>> os(3);
+		ins->u.opcode = 0x6e;
 		int numOps = 3;
 		check_num_ops(s, w, numOps);
 		for (int i = 0; i < numOps; i++)
@@ -2262,9 +2266,9 @@ static vector<DWORD> assembleIns(string s)
 			os.push_back(vector<DWORD>{0});
 		}
 
-		ins->length = 1;
+		ins->u.length = 1;
 		for (int i = 0; i < numOps; i++)
-			ins->length += (int)os[i].size();
+			ins->u.length += (int)os[i].size();
 
 		v.push_back(op);
 		for (int i = 0; i < numOps; i++)
@@ -2299,7 +2303,7 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 
 	try {
 		v2 = assembleIns(s);
-	} catch (AssemblerParseError) {
+	} catch (AssemblerParseError&) {
 		// Parse error, but not much we can / should do at this point
 		// since we're acting as a disassembler (maybe we're
 		// disassembling a shader with an instruction, operand, etc. we
@@ -2314,13 +2318,13 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 		if (v2.size() == v.size()) {
 			for (DWORD i = 0; i < v.size(); i++) {
 				if (v[i] == 0x1835) {
-					int size = v[++i];
+					int size = (int)v[++i];
 					int loopSize = (size - 2) / 4;
 					lastLiteral = sNew.find("{ { ");
 					for (int j = 0; j < loopSize; j++) {
 						i++;
 						lastLiteral = sNew.find("{ ", lastLiteral + 1);
-						lastEnd = sNew.find(",", lastLiteral + 1);
+						lastEnd = sNew.find(',', lastLiteral + 1);
 						s3 = sNew.substr(lastLiteral + 2, lastEnd - 2 - lastLiteral);
 						if (v[i] != v2[i]) {
 							string sLiteral = convertF(v[i]);
@@ -2331,8 +2335,8 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 							sNew = sBegin;
 						}
 						i++;
-						lastLiteral = sNew.find(",", lastLiteral + 1);
-						lastEnd = sNew.find(",", lastLiteral + 1);
+						lastLiteral = sNew.find(',', lastLiteral + 1);
+						lastEnd = sNew.find(',', lastLiteral + 1);
 						s3 = sNew.substr(lastLiteral + 2, lastEnd - 2 - lastLiteral);
 						if (v[i] != v2[i]) {
 							string sLiteral = convertF(v[i]);
@@ -2345,8 +2349,8 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 							sNew = sBegin;
 						}
 						i++;
-						lastLiteral = sNew.find(",", lastLiteral + 1);
-						lastEnd = sNew.find(",", lastLiteral + 1);
+						lastLiteral = sNew.find(',', lastLiteral + 1);
+						lastEnd = sNew.find(',', lastLiteral + 1);
 						s3 = sNew.substr(lastLiteral + 2, lastEnd - 2 - lastLiteral);
 						if (v[i] != v2[i]) {
 							string sLiteral = convertF(v[i]);
@@ -2359,8 +2363,8 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 							sNew = sBegin;
 						}
 						i++;
-						lastLiteral = sNew.find(",", lastLiteral + 1);
-						lastEnd = sNew.find("}", lastLiteral + 1);
+						lastLiteral = sNew.find(',', lastLiteral + 1);
+						lastEnd = sNew.find('}', lastLiteral + 1);
 						s3 = sNew.substr(lastLiteral + 2, lastEnd - 2 - lastLiteral);
 						if (v[i] != v2[i]) {
 							string sLiteral = convertF(v[i]);
@@ -2377,7 +2381,7 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 				} else if (v[i] == 0x4001) { // One component float literal
 					i++;
 					lastLiteral = sNew.find("l(", lastLiteral + 1);
-					lastEnd = sNew.find(")", lastLiteral);
+					lastEnd = sNew.find(')', lastLiteral);
 					if (v[i] != v2[i]) {
 						string sLiteral = convertF(v[i]);
 						string sBegin = sNew.substr(0, lastLiteral + 2); // +2 matches length of "l("
@@ -2389,7 +2393,7 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 				} else if (v[i] == 0x4002) { // Four component float literal
 					i++;
 					lastLiteral = sNew.find("l(", lastLiteral);
-					lastEnd = sNew.find(",", lastLiteral);
+					lastEnd = sNew.find(',', lastLiteral);
 					if (v[i] != v2[i]) {
 						string sLiteral = convertF(v[i]);
 						string sBegin = sNew.substr(0, lastLiteral + 2); // +2 matches length of "l("
@@ -2399,8 +2403,8 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 						sNew = sBegin;
 					}
 					i++;
-					lastLiteral = sNew.find(",", lastLiteral + 1);
-					lastEnd = sNew.find(",", lastLiteral + 1);
+					lastLiteral = sNew.find(',', lastLiteral + 1);
+					lastEnd = sNew.find(',', lastLiteral + 1);
 					if (v[i] != v2[i]) {
 						string sLiteral = convertF(v[i]);
 						string sBegin = sNew.substr(0, lastLiteral + 1); // BUG FIXED: Was using +2, but "," is only length 1 -DSS
@@ -2412,8 +2416,8 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 						sNew = sBegin;
 					}
 					i++;
-					lastLiteral = sNew.find(",", lastLiteral + 1);
-					lastEnd = sNew.find(",", lastLiteral + 1);
+					lastLiteral = sNew.find(',', lastLiteral + 1);
+					lastEnd = sNew.find(',', lastLiteral + 1);
 					if (v[i] != v2[i]) {
 						string sLiteral = convertF(v[i]);
 						string sBegin = sNew.substr(0, lastLiteral + 1); // BUG FIXED: Was using +2, but "," is only length 1 -DSS
@@ -2425,8 +2429,8 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 						sNew = sBegin;
 					}
 					i++;
-					lastLiteral = sNew.find(",", lastLiteral + 1);
-					lastEnd = sNew.find(")", lastLiteral + 1);
+					lastLiteral = sNew.find(',', lastLiteral + 1);
+					lastEnd = sNew.find(')', lastLiteral + 1);
 					if (v[i] != v2[i]) {
 						string sLiteral = convertF(v[i]);
 						string sBegin = sNew.substr(0, lastLiteral + 1); // BUG FIXED: Was using +2, but "," is only length 1 -DSS
@@ -2440,10 +2444,10 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 				} else if (v[i] == 0x5002) { // Double literal (two doubles x two components/double)
 					i += 2;
 					lastLiteral = sNew.find("d(", lastLiteral);
-					lastEnd = sNew.find(",", lastLiteral);
+					lastEnd = sNew.find(',', lastLiteral);
 					// If it's a hex literal it is split over four components instead of two:
 					if (!sNew.compare(lastLiteral + 2, 2, "0x"))
-						lastEnd = sNew.find(",", lastLiteral + 1);
+						lastEnd = sNew.find(',', lastLiteral + 1);
 					if (v[i-1] != v2[i-1] || v[i] != v2[i]) {
 						string sLiteral = convertD(v[i-1], v[i]);
 						string sBegin = sNew.substr(0, lastLiteral + 2);
@@ -2453,11 +2457,11 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 						sNew = sBegin;
 					}
 					i += 2;
-					lastLiteral = sNew.find(",", lastLiteral + 1);
+					lastLiteral = sNew.find(',', lastLiteral + 1);
 					// If it's a hex literal it is split over four components instead of two:
 					if (!sNew.compare(lastLiteral + 2, 2, "0x"))
-						lastLiteral = sNew.find(",", lastLiteral + 1);
-					lastEnd = sNew.find(")", lastLiteral + 1);
+						lastLiteral = sNew.find(',', lastLiteral + 1);
+					lastEnd = sNew.find(')', lastLiteral + 1);
 					if (v[i-1] != v2[i-1] || v[i] != v2[i]) {
 						string sLiteral = convertD(v[i-1], v[i]);
 						string sBegin = sNew.substr(0, lastLiteral + 1);
@@ -2512,7 +2516,7 @@ static string assembleAndCompare(string s, vector<DWORD> v)
 			codeBin[s2] = v;
 		}
 	}
-	string ret = "";
+	string ret;
 	for (int i = 0; i < numSpaces; i++) {
 		ret.append(" ");
 	}
@@ -2563,6 +2567,7 @@ std::vector<std::string> stringToLines(const char* start, size_t size)
 	}
 	return lines;
 }
+#if MIGOTO_DX == 9
 static vector<string> stringToLinesDX9(const char* start, size_t size) {
 	vector<string> lines;
 	const char* pStart = start;
@@ -2608,6 +2613,7 @@ static vector<string> stringToLinesDX9(const char* start, size_t size) {
 	}
 	return lines;
 }
+#endif
 
 static void hexdump_instruction(string &s, vector<DWORD> &v,
 		vector<string> &lines, DWORD *i,
@@ -2620,7 +2626,7 @@ static void hexdump_instruction(string &s, vector<DWORD> &v,
 	string parse_error;
 
 	try {
-		v2 = assembleIns(s.substr(s.find_first_not_of(" ")));
+		v2 = assembleIns(s.substr(s.find_first_not_of(' ')));
 	} catch (AssemblerParseError &e) {
 		parse_error = e.desc;
 	}
@@ -2903,6 +2909,9 @@ HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const ch
 	vector<DWORD> chunkOffsets;
 	int rdef_state = 0;
 
+	(void)one; // set but not used
+	(void)fSize; // set but not used
+
 	// TODO: Add robust error checking here (buffer is at least as large as
 	// the header, etc). I've added a check for numChunks < 1 as that
 	// would lead to codeByteStart being used uninitialised
@@ -2941,9 +2950,10 @@ HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const ch
 
 	byte* codeByteStart;
 	int codeChunk = 0;
+	(void)codeChunk; // set but not used
 	for (DWORD i = 1; i <= numChunks; i++)
     {
-		codeChunk = numChunks - i;
+		codeChunk = (int)(numChunks - i);
 		codeByteStart = buffer->data() + chunkOffsets[numChunks - i];
 		if (memcmp(codeByteStart, "SHEX", 4) == 0 || memcmp(codeByteStart, "SHDR", 4) == 0)
 			break;
@@ -2987,7 +2997,7 @@ HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const ch
 			s = s2;
 			multiLine = false;
 			multiLines++;
-			shader_ins* ins = (shader_ins*)codeStart;
+			// shader_ins* ins = (shader_ins*)codeStart;
 			v.push_back(*codeStart);
 			codeStart++;
 			DWORD length = *codeStart;
@@ -3013,7 +3023,7 @@ HRESULT disassembler(std::vector<byte> *buffer, std::vector<byte> *ret, const ch
 			v.push_back(*codeStart);
 			codeStart++;
 
-			for (DWORD j = 1; j < ins->length; j++) {
+			for (DWORD j = 1; j < ins->u.length; j++) {
 				v.push_back(*codeStart);
 				codeStart++;
 			}
@@ -3105,7 +3115,7 @@ static vector<DWORD> ComputeHash(byte const* input, DWORD size)
 	DWORD Dst[16];
 	DWORD Data[] = { 0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 	DWORD loopSize2 = loopSize - (sizeHash56 ? 2 : 1);
-	DWORD start_0 = 0;
+	// DWORD start_0 = 0;
 	DWORD* pSrc = (DWORD*)input;
 	DWORD h[] = { 0x67452301, 0xEFCDAB89, 0x98BADCFE, 0x10325476 };
 	if (loopSize > 0) {
@@ -3137,39 +3147,39 @@ static vector<DWORD> ComputeHash(byte const* input, DWORD size)
 			edi = h[2];
 			esi = h[3];
 
-			edx = _rotl((~ebx & esi | ebx & edi) + pSrc[0] + 0xD76AA478 + edx, 7) + ebx;
-			esi = _rotl((~edx & edi | edx & ebx) + pSrc[1] + 0xE8C7B756 + esi, 12) + edx;
-			edi = _rotr((~esi & ebx | esi & edx) + pSrc[2] + 0x242070DB + edi, 15) + esi;
-			ebx = _rotr((~edi & edx | edi & esi) + pSrc[3] + 0xC1BDCEEE + ebx, 10) + edi;
-			edx = _rotl((~ebx & esi | ebx & edi) + pSrc[4] + 0xF57C0FAF + edx, 7) + ebx;
-			esi = _rotl((~edx & edi | ebx & edx) + pSrc[5] + 0x4787C62A + esi, 12) + edx;
-			edi = _rotr((~esi & ebx | esi & edx) + pSrc[6] + 0xA8304613 + edi, 15) + esi;
-			ebx = _rotr((~edi & edx | edi & esi) + pSrc[7] + 0xFD469501 + ebx, 10) + edi;
-			edx = _rotl((~ebx & esi | ebx & edi) + pSrc[8] + 0x698098D8 + edx, 7) + ebx;
-			esi = _rotl((~edx & edi | ebx & edx) + pSrc[9] + 0x8B44F7AF + esi, 12) + edx;
-			edi = _rotr((~esi & ebx | esi & edx) + pSrc[10] + 0xFFFF5BB1 + edi, 15) + esi;
-			ebx = _rotr((~edi & edx | edi & esi) + pSrc[11] + 0x895CD7BE + ebx, 10) + edi;
-			edx = _rotl((~ebx & esi | ebx & edi) + pSrc[12] + 0x6B901122 + edx, 7) + ebx;
-			esi = _rotl((~edx & edi | ebx & edx) + pSrc[13] + 0xFD987193 + esi, 12) + edx;
-			edi = _rotr((~esi & ebx | esi & edx) + pSrc[14] + 0xA679438E + edi, 15) + esi;
-			ebx = _rotr((~edi & edx | edi & esi) + pSrc[15] + 0x49B40821 + ebx, 10) + edi;
+			edx = _rotl(((~ebx & esi) | (ebx & edi)) + pSrc[0] + 0xD76AA478 + edx, 7) + ebx;
+			esi = _rotl(((~edx & edi) | (edx & ebx)) + pSrc[1] + 0xE8C7B756 + esi, 12) + edx;
+			edi = _rotr(((~esi & ebx) | (esi & edx)) + pSrc[2] + 0x242070DB + edi, 15) + esi;
+			ebx = _rotr(((~edi & edx) | (edi & esi)) + pSrc[3] + 0xC1BDCEEE + ebx, 10) + edi;
+			edx = _rotl(((~ebx & esi) | (ebx & edi)) + pSrc[4] + 0xF57C0FAF + edx, 7) + ebx;
+			esi = _rotl(((~edx & edi) | (ebx & edx)) + pSrc[5] + 0x4787C62A + esi, 12) + edx;
+			edi = _rotr(((~esi & ebx) | (esi & edx)) + pSrc[6] + 0xA8304613 + edi, 15) + esi;
+			ebx = _rotr(((~edi & edx) | (edi & esi)) + pSrc[7] + 0xFD469501 + ebx, 10) + edi;
+			edx = _rotl(((~ebx & esi) | (ebx & edi)) + pSrc[8] + 0x698098D8 + edx, 7) + ebx;
+			esi = _rotl(((~edx & edi) | (ebx & edx)) + pSrc[9] + 0x8B44F7AF + esi, 12) + edx;
+			edi = _rotr(((~esi & ebx) | (esi & edx)) + pSrc[10] + 0xFFFF5BB1 + edi, 15) + esi;
+			ebx = _rotr(((~edi & edx) | (edi & esi)) + pSrc[11] + 0x895CD7BE + ebx, 10) + edi;
+			edx = _rotl(((~ebx & esi) | (ebx & edi)) + pSrc[12] + 0x6B901122 + edx, 7) + ebx;
+			esi = _rotl(((~edx & edi) | (ebx & edx)) + pSrc[13] + 0xFD987193 + esi, 12) + edx;
+			edi = _rotr(((~esi & ebx) | (esi & edx)) + pSrc[14] + 0xA679438E + edi, 15) + esi;
+			ebx = _rotr(((~edi & edx) | (edi & esi)) + pSrc[15] + 0x49B40821 + ebx, 10) + edi;
 
-			edx = _rotl((~esi & edi | esi & ebx) + pSrc[1] + 0xF61E2562 + edx, 5) + ebx;
-			esi = _rotl((~edi & ebx | edi & edx) + pSrc[6] + 0xC040B340 + esi, 9) + edx;
-			edi = _rotl((~ebx & edx | ebx & esi) + pSrc[11] + 0x265E5A51 + edi, 14) + esi;
-			ebx = _rotr((~edx & esi | edx & edi) + pSrc[0] + 0xE9B6C7AA + ebx, 12) + edi;
-			edx = _rotl((~esi & edi | esi & ebx) + pSrc[5] + 0xD62F105D + edx, 5) + ebx;
-			esi = _rotl((~edi & ebx | edi & edx) + pSrc[10] + 0x02441453 + esi, 9) + edx;
-			edi = _rotl((~ebx & edx | ebx & esi) + pSrc[15] + 0xD8A1E681 + edi, 14) + esi;
-			ebx = _rotr((~edx & esi | edx & edi) + pSrc[4] + 0xE7D3FBC8 + ebx, 12) + edi;
-			edx = _rotl((~esi & edi | esi & ebx) + pSrc[9] + 0x21E1CDE6 + edx, 5) + ebx;
-			esi = _rotl((~edi & ebx | edi & edx) + pSrc[14] + 0xC33707D6 + esi, 9) + edx;
-			edi = _rotl((~ebx & edx | ebx & esi) + pSrc[3] + 0xF4D50D87 + edi, 14) + esi;
-			ebx = _rotr((~edx & esi | edx & edi) + pSrc[8] + 0x455A14ED + ebx, 12) + edi;
-			edx = _rotl((~esi & edi | esi & ebx) + pSrc[13] + 0xA9E3E905 + edx, 5) + ebx;
-			esi = _rotl((~edi & ebx | edi & edx) + pSrc[2] + 0xFCEFA3F8 + esi, 9) + edx;
-			edi = _rotl((~ebx & edx | ebx & esi) + pSrc[7] + 0x676F02D9 + edi, 14) + esi;
-			ebx = _rotr((~edx & esi | edx & edi) + pSrc[12] + 0x8D2A4C8A + ebx, 12) + edi;
+			edx = _rotl(((~esi & edi) | (esi & ebx)) + pSrc[1] + 0xF61E2562 + edx, 5) + ebx;
+			esi = _rotl(((~edi & ebx) | (edi & edx)) + pSrc[6] + 0xC040B340 + esi, 9) + edx;
+			edi = _rotl(((~ebx & edx) | (ebx & esi)) + pSrc[11] + 0x265E5A51 + edi, 14) + esi;
+			ebx = _rotr(((~edx & esi) | (edx & edi)) + pSrc[0] + 0xE9B6C7AA + ebx, 12) + edi;
+			edx = _rotl(((~esi & edi) | (esi & ebx)) + pSrc[5] + 0xD62F105D + edx, 5) + ebx;
+			esi = _rotl(((~edi & ebx) | (edi & edx)) + pSrc[10] + 0x02441453 + esi, 9) + edx;
+			edi = _rotl(((~ebx & edx) | (ebx & esi)) + pSrc[15] + 0xD8A1E681 + edi, 14) + esi;
+			ebx = _rotr(((~edx & esi) | (edx & edi)) + pSrc[4] + 0xE7D3FBC8 + ebx, 12) + edi;
+			edx = _rotl(((~esi & edi) | (esi & ebx)) + pSrc[9] + 0x21E1CDE6 + edx, 5) + ebx;
+			esi = _rotl(((~edi & ebx) | (edi & edx)) + pSrc[14] + 0xC33707D6 + esi, 9) + edx;
+			edi = _rotl(((~ebx & edx) | (ebx & esi)) + pSrc[3] + 0xF4D50D87 + edi, 14) + esi;
+			ebx = _rotr(((~edx & esi) | (edx & edi)) + pSrc[8] + 0x455A14ED + ebx, 12) + edi;
+			edx = _rotl(((~esi & edi) | (esi & ebx)) + pSrc[13] + 0xA9E3E905 + edx, 5) + ebx;
+			esi = _rotl(((~edi & ebx) | (edi & edx)) + pSrc[2] + 0xFCEFA3F8 + esi, 9) + edx;
+			edi = _rotl(((~ebx & edx) | (ebx & esi)) + pSrc[7] + 0x676F02D9 + edi, 14) + esi;
+			ebx = _rotr(((~edx & esi) | (edx & edi)) + pSrc[12] + 0x8D2A4C8A + ebx, 12) + edi;
 
 			edx = _rotl((esi ^ edi ^ ebx) + pSrc[5] + 0xFFFA3942 + edx, 4) + ebx;
 			esi = _rotl((edi ^ ebx ^ edx) + pSrc[8] + 0x8771F681 + esi, 11) + edx;
@@ -3231,6 +3241,9 @@ std::vector<byte> assembler(std::vector<char> *asmFile, std::vector<byte> origBy
 	DWORD numChunks;
 	vector<DWORD> chunkOffsets;
 
+	(void)one; // set but not used
+	(void)fSize; // set but not used
+
 	// TODO: Add robust error checking here (origBytecode is at least as large as
 	// the header, etc). I've added a check for numChunks < 1 as that
 	// would lead to codeByteStart being used uninitialised
@@ -3257,7 +3270,7 @@ std::vector<byte> assembler(std::vector<char> *asmFile, std::vector<byte> origBy
 	byte* codeByteStart;
 	int codeChunk = 0;
 	for (DWORD i = 1; i <= numChunks; i++) {
-		codeChunk = numChunks - i;
+		codeChunk = (int)(numChunks - i);
 		codeByteStart = origBytecode.data() + chunkOffsets[numChunks - i];
 		if (memcmp(codeByteStart, "SHEX", 4) == 0 || memcmp(codeByteStart, "SHDR", 4) == 0)
 			break;
@@ -3294,12 +3307,12 @@ std::vector<byte> assembler(std::vector<char> *asmFile, std::vector<byte> origBy
 			} else if (multiLine) {
 				s2.append("\n");
 				s2.append(s);
-			} else if (s.find_first_not_of(" ") != string::npos) {
+			} else if (s.find_first_not_of(' ') != string::npos) {
 				vector<DWORD> ins = assembleIns(s);
 				o.insert(o.end(), ins.begin(), ins.end());
 			}
 		} catch (AssemblerParseError &e) {
-			e.line_no = i + 1;
+			e.line_no = (int)i + 1;
 			e.update_msg();
 
 			// Since we never used to warn about parse errors there
@@ -3322,7 +3335,7 @@ std::vector<byte> assembler(std::vector<char> *asmFile, std::vector<byte> origBy
 	codeStart = (DWORD*)(codeByteStart); // Endian bug, not that we care
 	auto it = origBytecode.begin() + chunkOffsets[codeChunk] + 8;
 	size_t codeSize = codeStart[1];
-	origBytecode.erase(it, it + codeSize);
+	origBytecode.erase(it, it + (ptrdiff_t)codeSize);
 	size_t newCodeSize = 4 * o.size();
 	codeStart[1] = (DWORD)newCodeSize;
 	vector<byte> newCode(newCodeSize);

@@ -4,6 +4,7 @@
 #include "reflect.h"
 #include "debug.h"
 #include "log.h"
+#include <cstring>
 
 class DecompileErrorDX9 : public std::exception {} decompileErrorDX9; // 3DMigoto specific
 
@@ -101,7 +102,7 @@ static void DecodeOperandDX9(const Shader* psShader,
 			}
 			default:
 			{
-				throw decompileErrorDX9;
+				throw DecompileErrorDX9();
 				//ASSERT(0);
 				//break;
 			}
@@ -302,6 +303,7 @@ static void DecodeOperandDX9(const Shader* psShader,
 					psOperand->iNumComponents = 1;
                     break;
                 }
+                default: break;
             }
             break;
         }
@@ -388,14 +390,14 @@ static void DecodeOperandDX9(const Shader* psShader,
 		}
         default:
         {
-			throw decompileErrorDX9;
+			throw DecompileErrorDX9();
            // ASSERT(0);
            // break;
         }
     }
 }
 
-static void DeclareNumTemps(Shader* psShader,
+static void DeclareNumTemps(Shader* /*psShader*/,
     const uint32_t ui32NumTemps,
     Declaration* psDecl)
 {
@@ -403,7 +405,7 @@ static void DeclareNumTemps(Shader* psShader,
     psDecl->value.ui32NumTemps = ui32NumTemps;
 }
 
-static void SetupRegisterUsage(const Shader* psShader,
+static void SetupRegisterUsage(const Shader* /*psShader*/,
                                 const uint32_t ui32Token0,
                                 const uint32_t ui32Token1)
 {
@@ -428,6 +430,9 @@ static void DeclareConstantBuffer(const Shader* psShader,
     DECLUSAGE_DX9 eUsage = (DECLUSAGE_DX9)0;
     uint32_t ui32UsageIndex = 0;
 	//Pick any constant register in the table. Might not start at c0 (e.g. when register(cX) is used).
+
+    (void)eUsage; // unused variable
+    (void)ui32UsageIndex; // unused variable
 
 	// This code differs from upstream. Is this a bug fix? -DSS
 	if (psShader->sInfo->psConstantBuffers->asVars.size() > 0) {
@@ -476,6 +481,10 @@ static void DecodeDeclarationDX9(const Shader* psShader,
     uint32_t ui32RegNum = DecodeOperandRegisterNumberDX9(ui32Token1);
     uint32_t ui32RegType = DecodeOperandTypeDX9(ui32Token1);
 
+    (void)eUsage; // unused variable
+    (void)ui32UsageIndex; // unused variable
+    (void)ui32RegNum; // unused variable
+
 	if(psShader->eShaderType == VERTEX_SHADER)
 	{
 		psDecl->eOpcode = OPCODE_DCL_INPUT;
@@ -518,7 +527,7 @@ static void DecodeDeclarationDX9(const Shader* psShader,
     }
 }
 
-static void DefineDX9(Shader* psShader,
+static void DefineDX9(Shader* /*psShader*/,
                       const uint32_t ui32RegNum,
 					  const uint32_t ui32Flags,
                       const uint32_t c0,
@@ -530,7 +539,7 @@ static void DefineDX9(Shader* psShader,
     psDecl->eOpcode = OPCODE_SPECIAL_DCL_IMMCONST;
     psDecl->ui32NumOperands = 2;
 
-    memset(&psDecl->asOperands[0], 0, sizeof(Operand));
+    memset((void*)&psDecl->asOperands[0], 0, sizeof(Operand));
 	psDecl->asOperands[0].eType = OPERAND_TYPE_SPECIAL_IMMCONST;
 
 	psDecl->asOperands[0].ui32RegisterNumber = ui32RegNum;
@@ -542,7 +551,7 @@ static void DefineDX9(Shader* psShader,
 
 	aui32ImmediateConst[ui32RegNum] |= ui32Flags;
 
-    memset(&psDecl->asOperands[1], 0, sizeof(Operand));
+    memset((void*)&psDecl->asOperands[1], 0, sizeof(Operand));
     psDecl->asOperands[1].eType = OPERAND_TYPE_IMMEDIATE32;
     psDecl->asOperands[1].iNumComponents = 4;
 	psDecl->asOperands[1].iIntegerImmediate = (ui32Flags & (DX9_DECODE_OPERAND_IS_ICONST|DX9_DECODE_OPERAND_IS_BCONST)) ? 1 : 0;
@@ -563,7 +572,7 @@ static void CreateD3D10Instruction(
     uint32_t ui32Src;
     uint32_t ui32Offset = 1;
 
-    memset(psInst, 0, sizeof(Instruction));
+    memset((void*)psInst, 0, sizeof(Instruction));
 
 #if defined(_DEBUG)
     psInst->id = instructionID++;
@@ -614,7 +623,7 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
     uint32_t bDeclareConstantTable = 0;
     Shader* psShader = new Shader();
 
-    memset(aui32ImmediateConst, 0, 256);
+    memset(aui32ImmediateConst, 0, 256 * sizeof(uint32_t));
 
 	psShader->dx9Shader = true; // 3DMigoto specific
 	psShader->ui32MajorVersion = DecodeProgramMajorVersionDX9(*pui32CurrentToken);
@@ -794,7 +803,7 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
                       Dest.z = (Src0.x > 0 && Src0.y > 0) ? pow(Src0.y, Src0.w) : 0
                       Dest.w = 1
                     */
-					throw decompileErrorDX9;
+					throw DecompileErrorDX9();
                    // ASSERT(0);
                    // break;
                 }
@@ -877,13 +886,13 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
                     //rsq RESULT, RESULT
 
                     CreateD3D10Instruction(psShader, &psInst[inst], OPCODE_DP4, 1, 1, pui32CurrentToken);
-                    memcpy(&psInst[inst].asOperands[2],&psInst[inst].asOperands[1], sizeof(Operand));
+                    memcpy((void*)&psInst[inst].asOperands[2],&psInst[inst].asOperands[1], sizeof(Operand));
 					psInst[inst].ui32NumOperands++;
                     ++inst;
 
                     CreateD3D10Instruction(psShader, &psInst[inst], OPCODE_RSQ, 0, 0, pui32CurrentToken);
-                    memcpy(&psInst[inst].asOperands[0],&psInst[inst-1].asOperands[0], sizeof(Operand));
-					memcpy(&psInst[inst].asOperands[1], &psInst[inst - 1].asOperands[0], sizeof(Operand));
+                    memcpy((void*)&psInst[inst].asOperands[0],&psInst[inst-1].asOperands[0], sizeof(Operand));
+					memcpy((void*)&psInst[inst].asOperands[1], &psInst[inst - 1].asOperands[0], sizeof(Operand));
 					psInst[inst].ui32NumOperands++;
 					psInst[inst].ui32NumOperands++;
 					break;
@@ -907,10 +916,10 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
                     psInst[inst].ui32NumOperands = 3;
 
                     //Set the angle
-                    memcpy(&psInst[inst].asOperands[2],&psInst[inst].asOperands[1], sizeof(Operand));
+                    memcpy((void*)&psInst[inst].asOperands[2],&psInst[inst].asOperands[1], sizeof(Operand));
 
                     //Set the cosine dest
-                    memcpy(&psInst[inst].asOperands[1],&psInst[inst].asOperands[0], sizeof(Operand));
+                    memcpy((void*)&psInst[inst].asOperands[1],&psInst[inst].asOperands[0], sizeof(Operand));
 
                     //Set write masks
                     psInst[inst].asOperands[0].ui32CompMask &= ~OPERAND_4_COMPONENT_MASK_Y;
@@ -966,7 +975,7 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
 					psInst[inst].asOperands[2].ui32RegisterNumber = 0;
 
 					//Lod comes from fourth coordinate of address.
-					memcpy(&psInst[inst].asOperands[4], &psInst[inst].asOperands[1], sizeof(Operand));
+					memcpy((void*)&psInst[inst].asOperands[4], &psInst[inst].asOperands[1], sizeof(Operand));
 
 					psInst[inst].ui32NumOperands = 5;
 					
@@ -1037,8 +1046,8 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
 					CreateD3D10Instruction(psShader, &psInst[inst], OPCODE_SAMPLE_D, 1, 4, pui32CurrentToken);
 
 					// Move the gradients one slot up
-					memcpy(&psInst[inst].asOperands[5], &psInst[inst].asOperands[4], sizeof(Operand));
-					memcpy(&psInst[inst].asOperands[4], &psInst[inst].asOperands[3], sizeof(Operand));
+					memcpy((void*)&psInst[inst].asOperands[5], &psInst[inst].asOperands[4], sizeof(Operand));
+					memcpy((void*)&psInst[inst].asOperands[4], &psInst[inst].asOperands[3], sizeof(Operand));
 
 					// Sampler register
 					psInst[inst].asOperands[3].ui32RegisterNumber = 0;
@@ -1099,7 +1108,7 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
                 case OPCODE_DX9_SETP:
                 case OPCODE_DX9_BREAKP:
                 {
-					throw decompileErrorDX9;
+					throw DecompileErrorDX9();
                     //ASSERT(0);
 					//psInst[inst].ui32NumOperands = 0;
                   //  break;
@@ -1142,7 +1151,7 @@ Shader* DecodeDX9BC(const uint32_t* pui32Tokens)
 					// Throw an explicit exception now, otherwise we will continue to
 					// use the uninitialised ui32NumOperands and process garbage.
 					LogInfo("    error parsing shader> unsupported opcode %i\n", eOpcode);
-					throw decompileErrorDX9;
+					throw DecompileErrorDX9();
                    // ASSERT(0);
                    // break;
                 }

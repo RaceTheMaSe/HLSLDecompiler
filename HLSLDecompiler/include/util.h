@@ -4,7 +4,14 @@
 #include "version.h"
 #include "log.h"
 #include "util_min.h"
-
+#if defined(__MINGW32__)
+typedef enum LOG_LEVEL {
+	LOG_INFOMRATION,
+	LOG_WARNING,
+	LOG_ERROR,
+	LOG_SEVERE
+} LOG_LEVEL;
+#endif
 //#if MIGOTO_DX == 11
 //#include "DirectX11\HookedDevice.h"
 //#include "DirectX11\HookedContext.h"
@@ -94,6 +101,8 @@ using MSComPtr = Microsoft::WRL::ComPtr<T>;
 
 
 // -----------------------------------------------------------------------------------------------
+
+#if defined(INCLUDE_UNUSED_FUNCTIONS)
 
 // Primary hash calculation for all shader file names.
 
@@ -210,6 +219,7 @@ static int _autoicmp(const char *s1, const char *s2)
 {
 	return _stricmp(s1, s2);
 }
+#endif // INCLUDE_UNUSED_FUNCTIONS
 
 // To use this function be sure to terminate an EnumName_t list with {NULL, 0}
 // as it cannot use ArraySize on passed in arrays.
@@ -391,8 +401,9 @@ static T2 parse_enum_option_string_prefix(struct EnumName_t<T1, T2> *enum_names,
 }
 
 #if MIGOTO_DX == 11
+#if defined(INCLUDE_UNUSED_FUNCTIONS)
 // http://msdn.microsoft.com/en-us/library/windows/desktop/bb173059(v=vs.85).aspx
-static char *DXGIFormats[] = {
+static const char *DXGIFormats[] = {
 	"UNKNOWN",
 	"R32G32B32A32_TYPELESS",
 	"R32G32B32A32_FLOAT",
@@ -511,7 +522,7 @@ static char *DXGIFormats[] = {
 	"B4G4R4A4_UNORM"
 };
 
-static char *TexFormatStr(unsigned int format)
+static const char *TexFormatStr(unsigned int format)
 {
 	if (format < sizeof(DXGIFormats) / sizeof(DXGIFormats[0]))
 		return DXGIFormats[format];
@@ -527,7 +538,7 @@ static DXGI_FORMAT ParseFormatString(const char *fmt, bool allow_numeric_format)
 	if (allow_numeric_format) {
 		// Try parsing format string as decimal:
 		nargs = sscanf_s(fmt, "%u%n", &format, &end);
-		if (nargs == 1 && end == strlen(fmt))
+		if (nargs == 1 && end == (int)strlen(fmt))
 			return (DXGI_FORMAT)format;
 	}
 
@@ -680,6 +691,7 @@ static UINT dxgi_format_size(DXGI_FORMAT format)
 			return 0;
 	}
 }
+#endif // INCLUDE_UNUSED_FUNCTIONS
 
 #endif // MIGOTO_DX == 11
 
@@ -716,7 +728,7 @@ static std::string BinaryToAsmText(const void *pShaderBytecode, size_t BytecodeL
 #endif // MIGOTO_DX
 	if (FAILED(r))
     {
-		LogInfo("  disassembly failed. Error: %x\n", r);
+		LogInfo("  disassembly failed. Error: %lx\n", r);
 		return "";
 	}
 
@@ -774,6 +786,7 @@ static std::string BinaryToAsmText(const void *pShaderBytecode, size_t BytecodeL
 //	return shaderModel;
 //}
 
+#if defined(INCLUDE_UNUSED_FUNCTIONS)
 static std::string GetShaderModel(const void *pShaderBytecode, size_t bytecodeLength)
 {
 	std::string asmText = BinaryToAsmText(pShaderBytecode, bytecodeLength, false);
@@ -858,13 +871,15 @@ static HRESULT CreateAsmTextFile(wchar_t* fileDirectory, UINT64 hash, const wcha
 
 // Specific variant to name files, so we know they are HLSL text.
 
-static HRESULT CreateHLSLTextFile(UINT64 hash, std::string hlslText)
+static HRESULT CreateHLSLTextFile(UINT64 /*hash*/, std::string /*hlslText*/)
 {
-
+	return {};
 }
+#endif // INCLUDE_UNUSED_FUNCTIONS
 
 // -----------------------------------------------------------------------------------------------
 
+#if defined(HAS_DIRECTX_MATH) // MinGW does not have it - function is unused
 // Parses the name of one of the IniParam constants: x, y, z, w, x1, y1, ..., z7, w7
 static bool ParseIniParamName(const wchar_t *name, int *idx, float DirectX::XMFLOAT4::**component)
 {
@@ -876,9 +891,9 @@ static bool ParseIniParamName(const wchar_t *name, int *idx, float DirectX::XMFL
 
 	// May or may not have matched index. Make sure entire string was
 	// matched either way and check index is valid if it was matched:
-	if (ret == 1 && len1 == length) {
+	if (ret == 1 && len1 == (int)length) {
 		*idx = 0;
-	} else if (ret == 2 && len2 == length) {
+	} else if (ret == 2 && len2 == (int)length) {
 #if MIGOTO_DX == 9
 		// Added gating for this DX9 specific limitation that we definitely do
 		// not want to enforce in DX11 as that would break a bunch of mods -DSS
@@ -906,6 +921,7 @@ static bool ParseIniParamName(const wchar_t *name, int *idx, float DirectX::XMFL
 
 	return false;
 }
+#endif // HAS_DIRECTX_MATH
 
 // -----------------------------------------------------------------------------------------------
 
@@ -921,17 +937,19 @@ void analyse_iunknown(IUnknown *unknown);
 // For the time being, since we are not setup to use the Win10 SDK, we'll add
 // these manually. Some games under Win10 are requesting these.
 
+#if !defined(__MINGW32__) || __MINGW32__ == 0 // compile error workaround
 struct _declspec(uuid("9d06dffa-d1e5-4d07-83a8-1bb123f2f841")) ID3D11Device2;
 struct _declspec(uuid("420d5b32-b90c-4da4-bef0-359f6a24a83a")) ID3D11DeviceContext2;
 struct _declspec(uuid("A8BE2AC4-199F-4946-B331-79599FB98DE7")) IDXGISwapChain2;
 struct _declspec(uuid("94D99BDB-F1F8-4AB0-B236-7DA0170EDAB1")) IDXGISwapChain3;
 struct _declspec(uuid("3D585D5A-BD4A-489E-B1F4-3DBCB6452FFB")) IDXGISwapChain4;
+#endif
 
 std::string NameFromIID(IID id);
 
 void WarnIfConflictingShaderExists(wchar_t *orig_path, const char *message = "");
-static const char *end_user_conflicting_shader_msg =
-	"Conflicting shaders present - please use uninstall.bat and reinstall the fix.\n";
+// static const char *end_user_conflicting_shader_msg =
+// 	"Conflicting shaders present - please use uninstall.bat and reinstall the fix.\n";
 
 struct OMState {
 	UINT NumRTVs;
@@ -958,7 +976,7 @@ void restore_om_state(ID3D11DeviceContext *context, struct OMState *state);
 
 // -----------------------------------------------------------------------------------------------
 #if MIGOTO_DX == 9
-static std::map<int, char*> D3DFORMATS = {
+static std::map<int, const char *> D3DFORMATS = {
 	{ 0, "UNKNOWN" },
 	{ 20, "R8G8B8" },
 	{ 21, "A8R8G8B8" },
@@ -1016,7 +1034,7 @@ static std::map<int, char*> D3DFORMATS = {
 	{ 199, "BINARYBUFFER " }
 };
 
-static char *TexFormatStrDX9(D3DFORMAT format)
+static const char *TexFormatStrDX9(D3DFORMAT format)
 {
 	switch (format) {
 	case MAKEFOURCC('U', 'Y', 'V', 'Y'):

@@ -13,27 +13,27 @@ enum SHADER_TYPE
     COMPUTE_SHADER,
 };
 
-static SHADER_TYPE DecodeShaderType(uint32_t ui32Token)
+inline SHADER_TYPE DecodeShaderType(uint32_t ui32Token)
 {
     return (SHADER_TYPE)((ui32Token & 0xffff0000) >> 16);
 }
 
-static uint32_t DecodeProgramMajorVersion(uint32_t ui32Token)
+inline uint32_t DecodeProgramMajorVersion(uint32_t ui32Token)
 {
     return (ui32Token & 0x000000f0) >> 4;
 }
 
-static uint32_t DecodeProgramMinorVersion(uint32_t ui32Token)
+inline uint32_t DecodeProgramMinorVersion(uint32_t ui32Token)
 {
     return (ui32Token & 0x0000000f);
 }
 
-static uint32_t DecodeInstructionLength(uint32_t ui32Token)
+inline uint32_t DecodeInstructionLength(uint32_t ui32Token)
 {
     return (ui32Token & 0x7f000000) >> 24;
 }
 
-static uint32_t DecodeIsOpcodeExtended(uint32_t ui32Token)
+inline uint32_t DecodeIsOpcodeExtended(uint32_t ui32Token)
 {
     return (ui32Token & 0x80000000) >> 31;
 }
@@ -46,7 +46,7 @@ enum EXTENDED_OPCODE_TYPE
     EXTENDED_OPCODE_RESOURCE_RETURN_TYPE = 3,
 };
 
-static EXTENDED_OPCODE_TYPE DecodeExtendedOpcodeType(uint32_t ui32Token)
+inline EXTENDED_OPCODE_TYPE DecodeExtendedOpcodeType(uint32_t ui32Token)
 {
     return (EXTENDED_OPCODE_TYPE)(ui32Token & 0x0000003f);
 }
@@ -64,12 +64,12 @@ enum RESOURCE_RETURN_TYPE
     RETURN_TYPE_UNUSED = 9,
 };
 
-static RESOURCE_RETURN_TYPE DecodeResourceReturnType(uint32_t ui32Coord, uint32_t ui32Token)
+inline RESOURCE_RETURN_TYPE DecodeResourceReturnType(uint32_t ui32Coord, uint32_t ui32Token)
 {
     return (RESOURCE_RETURN_TYPE)((ui32Token>>(ui32Coord * 4))&0xF);
 }
 
-static RESOURCE_RETURN_TYPE DecodeExtendedResourceReturnType(uint32_t ui32Coord, uint32_t ui32Token)
+inline RESOURCE_RETURN_TYPE DecodeExtendedResourceReturnType(uint32_t ui32Coord, uint32_t ui32Token)
 {
     return (RESOURCE_RETURN_TYPE)((ui32Token>>(ui32Coord * 4 + 6))&0xF);
 }
@@ -340,7 +340,7 @@ enum OPCODE_TYPE
     OPCODE_INVAILD = NUM_OPCODES,
 };
 
-static OPCODE_TYPE DecodeOpcodeType(uint32_t ui32Token)
+inline OPCODE_TYPE DecodeOpcodeType(uint32_t ui32Token)
 {
     return (OPCODE_TYPE)(ui32Token & 0x00007ff);
 }
@@ -353,7 +353,7 @@ enum OPERAND_INDEX_DIMENSION
     INDEX_3D,
 };
 
-static OPERAND_INDEX_DIMENSION DecodeOperandIndexDimension(uint32_t ui32Token)
+inline OPERAND_INDEX_DIMENSION DecodeOperandIndexDimension(uint32_t ui32Token)
 {
 	return (OPERAND_INDEX_DIMENSION)((ui32Token & 0x00300000) >> 20);
 }
@@ -422,12 +422,12 @@ enum OPERAND_TYPE
     OPERAND_TYPE_CYCLE_COUNTER = 40, // Cycle counter
 };
 
-static OPERAND_TYPE DecodeOperandType(uint32_t ui32Token)
+inline OPERAND_TYPE DecodeOperandType(uint32_t ui32Token)
 {
 	return (OPERAND_TYPE)((ui32Token & 0x000ff000) >> 12);
 }
 
-static SPECIAL_NAME DecodeOperandSpecialName(uint32_t ui32Token)
+inline SPECIAL_NAME DecodeOperandSpecialName(uint32_t ui32Token)
 {
 	return (SPECIAL_NAME)(ui32Token & 0x0000ffff);
 }
@@ -445,7 +445,7 @@ typedef enum OPERAND_INDEX_REPRESENTATION
                                                      //   by extra operand
 } OPERAND_INDEX_REPRESENTATION;
 
-static OPERAND_INDEX_REPRESENTATION DecodeOperandIndexRepresentation(uint32_t ui32Dimension, uint32_t ui32Token)
+inline OPERAND_INDEX_REPRESENTATION DecodeOperandIndexRepresentation(uint32_t ui32Dimension, uint32_t ui32Token)
 {
 	return (OPERAND_INDEX_REPRESENTATION)((ui32Token & (0x3<<(22+3*((ui32Dimension)&3)))) >> (22+3*((ui32Dimension)&3)));
 }
@@ -458,7 +458,7 @@ typedef enum OPERAND_NUM_COMPONENTS
     OPERAND_N_COMPONENT = 3 // unused for now
 } OPERAND_NUM_COMPONENTS;
 
-static OPERAND_NUM_COMPONENTS DecodeOperandNumComponents(uint32_t ui32Token)
+inline OPERAND_NUM_COMPONENTS DecodeOperandNumComponents(uint32_t ui32Token)
 {
 	return (OPERAND_NUM_COMPONENTS)(ui32Token & 0x00000003);
 }
@@ -470,7 +470,7 @@ typedef enum OPERAND_4_COMPONENT_SELECTION_MODE
     OPERAND_4_COMPONENT_SELECT_1_MODE = 2, // select 1 of 4 components
 } OPERAND_4_COMPONENT_SELECTION_MODE;
 
-static OPERAND_4_COMPONENT_SELECTION_MODE DecodeOperand4CompSelMode(uint32_t ui32Token)
+inline OPERAND_4_COMPONENT_SELECTION_MODE DecodeOperand4CompSelMode(uint32_t ui32Token)
 {
 	return (OPERAND_4_COMPONENT_SELECTION_MODE)((ui32Token & 0x0000000c) >> 2);
 }
@@ -485,17 +485,17 @@ static OPERAND_4_COMPONENT_SELECTION_MODE DecodeOperand4CompSelMode(uint32_t ui3
 #define OPERAND_4_COMPONENT_MASK_A      OPERAND_4_COMPONENT_MASK_W
 #define OPERAND_4_COMPONENT_MASK_ALL    0x0000000f
 
-static uint32_t DecodeOperand4CompMask(uint32_t ui32Token)
+inline uint32_t DecodeOperand4CompMask(uint32_t ui32Token)
 {
 	return (uint32_t)((ui32Token & 0x000000f0) >> 4);
 }
 
-static uint32_t DecodeOperand4CompSwizzle(uint32_t ui32Token)
+inline uint32_t DecodeOperand4CompSwizzle(uint32_t ui32Token)
 {
 	return (uint32_t)((ui32Token & 0x00000ff0) >> 4);
 }
 
-static uint32_t DecodeOperand4CompSel1(uint32_t ui32Token)
+inline uint32_t DecodeOperand4CompSel1(uint32_t ui32Token)
 {
 	return (uint32_t)((ui32Token & 0x00000030) >> 4);
 }
@@ -505,14 +505,16 @@ static uint32_t DecodeOperand4CompSel1(uint32_t ui32Token)
 #define OPERAND_4_COMPONENT_Z      2
 #define OPERAND_4_COMPONENT_W      3
 
+#if defined(NEEDS_NO_SWIZZLE_VARIABLE)
 static uint32_t NO_SWIZZLE = (( (OPERAND_4_COMPONENT_X) | (OPERAND_4_COMPONENT_Y<<2) | (OPERAND_4_COMPONENT_Z << 4) | (OPERAND_4_COMPONENT_W << 6))/*<<4*/);
+#endif
 
-static uint32_t XXXX_SWIZZLE = (((OPERAND_4_COMPONENT_X) | (OPERAND_4_COMPONENT_X<<2) | (OPERAND_4_COMPONENT_X << 4) | (OPERAND_4_COMPONENT_X << 6)));
-static uint32_t YYYY_SWIZZLE = (((OPERAND_4_COMPONENT_Y) | (OPERAND_4_COMPONENT_Y<<2) | (OPERAND_4_COMPONENT_Y << 4) | (OPERAND_4_COMPONENT_Y << 6)));
-static uint32_t ZZZZ_SWIZZLE = (((OPERAND_4_COMPONENT_Z) | (OPERAND_4_COMPONENT_Z<<2) | (OPERAND_4_COMPONENT_Z << 4) | (OPERAND_4_COMPONENT_Z << 6)));
-static uint32_t WWWW_SWIZZLE = (((OPERAND_4_COMPONENT_W) | (OPERAND_4_COMPONENT_W<<2) | (OPERAND_4_COMPONENT_W << 4) | (OPERAND_4_COMPONENT_W << 6)));
+// static uint32_t XXXX_SWIZZLE = (((OPERAND_4_COMPONENT_X) | (OPERAND_4_COMPONENT_X<<2) | (OPERAND_4_COMPONENT_X << 4) | (OPERAND_4_COMPONENT_X << 6)));
+// static uint32_t YYYY_SWIZZLE = (((OPERAND_4_COMPONENT_Y) | (OPERAND_4_COMPONENT_Y<<2) | (OPERAND_4_COMPONENT_Y << 4) | (OPERAND_4_COMPONENT_Y << 6)));
+// static uint32_t ZZZZ_SWIZZLE = (((OPERAND_4_COMPONENT_Z) | (OPERAND_4_COMPONENT_Z<<2) | (OPERAND_4_COMPONENT_Z << 4) | (OPERAND_4_COMPONENT_Z << 6)));
+// static uint32_t WWWW_SWIZZLE = (((OPERAND_4_COMPONENT_W) | (OPERAND_4_COMPONENT_W<<2) | (OPERAND_4_COMPONENT_W << 4) | (OPERAND_4_COMPONENT_W << 6)));
 
-static uint32_t DecodeOperand4CompSwizzleSource(uint32_t ui32Token, uint32_t comp)
+inline uint32_t DecodeOperand4CompSwizzleSource(uint32_t ui32Token, uint32_t comp)
 {
     return (uint32_t)(((ui32Token)>>(4+2*((comp)&3)))&3);
 }
@@ -534,12 +536,12 @@ enum RESOURCE_DIMENSION
     RESOURCE_DIMENSION_STRUCTURED_BUFFER = 12,
 };
 
-static RESOURCE_DIMENSION DecodeResourceDimension(uint32_t ui32Token)
+inline RESOURCE_DIMENSION DecodeResourceDimension(uint32_t ui32Token)
 {
 	return (RESOURCE_DIMENSION)((ui32Token & 0x0000f800) >> 11);
 }
 
-static RESOURCE_DIMENSION DecodeExtendedResourceDimension(uint32_t ui32Token)
+inline RESOURCE_DIMENSION DecodeExtendedResourceDimension(uint32_t ui32Token)
 {
 	return (RESOURCE_DIMENSION)((ui32Token & 0x000007C0) >> 6);
 }
@@ -550,12 +552,12 @@ enum INSTRUCTION_TEST_BOOLEAN
     INSTRUCTION_TEST_NONZERO    = 1
 };
 
-static INSTRUCTION_TEST_BOOLEAN DecodeInstrTestBool(uint32_t ui32Token)
+inline INSTRUCTION_TEST_BOOLEAN DecodeInstrTestBool(uint32_t ui32Token)
 {
 	return (INSTRUCTION_TEST_BOOLEAN)((ui32Token & 0x00040000) >> 18);
 }
 
-static uint32_t DecodeIsOperandExtended(uint32_t ui32Token)
+inline uint32_t DecodeIsOperandExtended(uint32_t ui32Token)
 {
     return (ui32Token & 0x80000000) >> 31;
 }
@@ -566,7 +568,7 @@ enum EXTENDED_OPERAND_TYPE
     EXTENDED_OPERAND_MODIFIER         = 1,
 };
 
-static EXTENDED_OPERAND_TYPE DecodeExtendedOperandType(uint32_t ui32Token)
+inline EXTENDED_OPERAND_TYPE DecodeExtendedOperandType(uint32_t ui32Token)
 {
 	return (EXTENDED_OPERAND_TYPE)(ui32Token & 0x0000003f);
 }
@@ -579,7 +581,7 @@ enum OPERAND_MODIFIER
     OPERAND_MODIFIER_ABSNEG   = 3,
 };
 
-static OPERAND_MODIFIER DecodeExtendedOperandModifier(uint32_t ui32Token)
+inline OPERAND_MODIFIER DecodeExtendedOperandModifier(uint32_t ui32Token)
 {
 	return (OPERAND_MODIFIER)((ui32Token & 0x00003fc0) >> 6);
 }
@@ -593,12 +595,12 @@ static const uint32_t GLOBAL_FLAG_ENABLE_MINIMUM_PRECISION = (1<<16);
 static const uint32_t GLOBAL_FLAG_ENABLE_DOUBLE_EXTENSIONS = (1<<17);
 static const uint32_t GLOBAL_FLAG_ENABLE_SHADER_EXTENSIONS = (1<<18);
 
-static uint32_t DecodeGlobalFlags(uint32_t ui32Token)
+inline uint32_t DecodeGlobalFlags(uint32_t ui32Token)
 {
 	return (uint32_t)(ui32Token & 0x00fff800);
 }
 
-static INTERPOLATION_MODE DecodeInterpolationMode(uint32_t ui32Token)
+inline INTERPOLATION_MODE DecodeInterpolationMode(uint32_t ui32Token)
 {
 	return (INTERPOLATION_MODE)((ui32Token & 0x00007800) >> 11);
 }
@@ -620,7 +622,7 @@ enum PRIMITIVE_TOPOLOGY
     PRIMITIVE_TOPOLOGY_TRIANGLESTRIP_ADJ = 13,
 };
 
-static PRIMITIVE_TOPOLOGY DecodeGSOutputPrimitiveTopology(uint32_t ui32Token)
+inline PRIMITIVE_TOPOLOGY DecodeGSOutputPrimitiveTopology(uint32_t ui32Token)
 {
 	return (PRIMITIVE_TOPOLOGY)((ui32Token & 0x0001f800) >> 11);
 }
@@ -668,12 +670,12 @@ enum PRIMITIVE
     PRIMITIVE_32_CONTROL_POINT_PATCH = 39,
 };
 
-static PRIMITIVE DecodeGSInputPrimitive(uint32_t ui32Token)
+inline PRIMITIVE DecodeGSInputPrimitive(uint32_t ui32Token)
 {
 	return (PRIMITIVE)((ui32Token & 0x0001f800) >> 11);
 }
 
-static TESSELLATOR_PARTITIONING DecodeTessPartitioning(uint32_t ui32Token)
+inline TESSELLATOR_PARTITIONING DecodeTessPartitioning(uint32_t ui32Token)
 {
 	return (TESSELLATOR_PARTITIONING)((ui32Token & 0x00003800) >> 11);
 }
@@ -686,12 +688,12 @@ typedef enum TESSELLATOR_DOMAIN
     TESSELLATOR_DOMAIN_QUAD      = 3
 } TESSELLATOR_DOMAIN;
 
-static TESSELLATOR_DOMAIN DecodeTessDomain(uint32_t ui32Token)
+inline TESSELLATOR_DOMAIN DecodeTessDomain(uint32_t ui32Token)
 {
 	return (TESSELLATOR_DOMAIN)((ui32Token & 0x00001800) >> 11);
 }
 
-static TESSELLATOR_OUTPUT_PRIMITIVE DecodeTessOutPrim(uint32_t ui32Token)
+inline TESSELLATOR_OUTPUT_PRIMITIVE DecodeTessOutPrim(uint32_t ui32Token)
 {
 	return (TESSELLATOR_OUTPUT_PRIMITIVE)((ui32Token & 0x00003800) >> 11);
 }
@@ -701,19 +703,19 @@ static const uint32_t SYNC_THREAD_GROUP_SHARED_MEMORY = 0x00001000;
 static const uint32_t SYNC_UNORDERED_ACCESS_VIEW_MEMORY_GROUP = 0x00002000;
 static const uint32_t SYNC_UNORDERED_ACCESS_VIEW_MEMORY_GLOBAL = 0x00004000;
 
-static uint32_t DecodeSyncFlags(uint32_t ui32Token)
+inline uint32_t DecodeSyncFlags(uint32_t ui32Token)
 {
 	return ui32Token & 0x00007800;
 }
 
 // The number of types that implement this interface
-static uint32_t DecodeInterfaceTableLength(uint32_t ui32Token)
+inline uint32_t DecodeInterfaceTableLength(uint32_t ui32Token)
 {
 	return (uint32_t)((ui32Token & 0x0000ffff) >> 0);
 }
 
 // The number of interfaces that are defined in this array.
-static uint32_t DecodeInterfaceArrayLength(uint32_t ui32Token)
+inline uint32_t DecodeInterfaceArrayLength(uint32_t ui32Token)
 {
 	return (uint32_t)((ui32Token & 0xffff0000) >> 16);
 }
@@ -727,12 +729,12 @@ enum CUSTOMDATA_CLASS
     CUSTOMDATA_SHADER_MESSAGE,
 };
 
-static CUSTOMDATA_CLASS DecodeCustomDataClass(uint32_t ui32Token)
+inline CUSTOMDATA_CLASS DecodeCustomDataClass(uint32_t ui32Token)
 {
 	return (CUSTOMDATA_CLASS)((ui32Token & 0xfffff800) >> 11);
 }
 
-static uint32_t DecodeInstructionSaturate(uint32_t ui32Token)
+inline uint32_t DecodeInstructionSaturate(uint32_t ui32Token)
 {
     return (ui32Token & 0x00002000) ? 1 : 0;
 }
@@ -747,12 +749,12 @@ enum OPERAND_MIN_PRECISION
     OPERAND_MIN_PRECISION_UINT_16    = 5, // Min 16 bit/comp. unsigned integer
 };
 
-static uint32_t DecodeOperandMinPrecision(uint32_t ui32Token)
+inline uint32_t DecodeOperandMinPrecision(uint32_t ui32Token)
 {
     return (ui32Token & 0x0001C000) >> 14;
 }
 
-static uint32_t DecodeOutputControlPointCount(uint32_t ui32Token)
+inline uint32_t DecodeOutputControlPointCount(uint32_t ui32Token)
 {
 	return ((ui32Token & 0x0001f800) >> 11);
 }
@@ -768,14 +770,14 @@ enum IMMEDIATE_ADDRESS_OFFSET_COORD
 #define IMMEDIATE_ADDRESS_OFFSET_SHIFT(Coord) (9+4*((Coord)&3))
 #define IMMEDIATE_ADDRESS_OFFSET_MASK(Coord) (0x0000000f<<IMMEDIATE_ADDRESS_OFFSET_SHIFT(Coord))
 
-static uint32_t DecodeImmediateAddressOffset(IMMEDIATE_ADDRESS_OFFSET_COORD eCoord, uint32_t ui32Token)
+inline uint32_t DecodeImmediateAddressOffset(IMMEDIATE_ADDRESS_OFFSET_COORD eCoord, uint32_t ui32Token)
 {
     return ((((ui32Token)&IMMEDIATE_ADDRESS_OFFSET_MASK(eCoord))>>(IMMEDIATE_ADDRESS_OFFSET_SHIFT(eCoord))));
 }
 
 // UAV access scope flags
 static const uint32_t GLOBALLY_COHERENT_ACCESS = 0x00010000;
-static uint32_t DecodeAccessCoherencyFlags(uint32_t ui32Token)
+inline uint32_t DecodeAccessCoherencyFlags(uint32_t ui32Token)
 {
     return ui32Token & 0x00010000;
 }
@@ -788,7 +790,7 @@ enum RESINFO_RETURN_TYPE
     RESINFO_INSTRUCTION_RETURN_UINT       = 2
 };
 
-static RESINFO_RETURN_TYPE DecodeResInfoReturnType(uint32_t ui32Token)
+inline RESINFO_RETURN_TYPE DecodeResInfoReturnType(uint32_t ui32Token)
 {
     return (RESINFO_RETURN_TYPE)((ui32Token & 0x00001800) >> 11);
 }

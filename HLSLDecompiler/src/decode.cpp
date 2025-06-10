@@ -1,3 +1,4 @@
+#define NEEDS_NO_SWIZZLE_VARIABLE
 #include "tokens.h"
 #include "structs.h"
 #include "decode.h"
@@ -137,8 +138,6 @@ void DecodeNameToken(const uint32_t* pui32NameToken, Operand* psOperand)
             break;
         }
     }
-
-    return;
 }
 
 // Find the declaration of the texture described by psTextureOperand and
@@ -187,7 +186,7 @@ uint32_t DecodeOperand (const uint32_t *pui32Tokens, Operand* psOperand)
 	psOperand->aeDataType[2] = SVT_FLOAT;
 	psOperand->aeDataType[3] = SVT_FLOAT;
 
-    psOperand->iExtended = DecodeIsOperandExtended(*pui32Tokens);
+    psOperand->iExtended = (int)DecodeIsOperandExtended(*pui32Tokens);
 
 
     psOperand->eModifier = OPERAND_MODIFIER_NONE;
@@ -393,21 +392,21 @@ const uint32_t* DecodeDeclaration(Shader* psShader, const uint32_t* pui32Token, 
                 const uint32_t indexRange = psDecl->value.ui32IndexRange;
                 const uint32_t reg = psDecl->asOperands[0].ui32RegisterNumber;
 
-                psShader->aIndexedInput[reg] = indexRange;
-                psShader->aIndexedInputParents[reg] = reg;
+                psShader->aIndexedInput[(int)reg] = (int)indexRange;
+                psShader->aIndexedInputParents[(int)reg] = (int)reg;
 
                 //-1 means don't declare this input because it falls in
                 //the range of an already declared array.
                 for(i=reg+1; i<reg+indexRange; ++i)
                 {
-                    psShader->aIndexedInput[i] = -1;
-                    psShader->aIndexedInputParents[i] = reg;
+                    psShader->aIndexedInput[(int)i] = -1;
+                    psShader->aIndexedInputParents[(int)i] = (int)reg;
                 }
             }
 
             if(psDecl->asOperands[0].eType == OPERAND_TYPE_OUTPUT)
             {
-                psShader->aIndexedOutput[psDecl->asOperands[0].ui32RegisterNumber] = psDecl->value.ui32IndexRange;
+                psShader->aIndexedOutput[(int)psDecl->asOperands[0].ui32RegisterNumber] = (int)psDecl->value.ui32IndexRange;
             }
             break;
         }
@@ -533,14 +532,14 @@ const uint32_t* DecodeDeclaration(Shader* psShader, const uint32_t* pui32Token, 
             psDecl->value.interface.ui32NumFuncTables = numClassesImplementingThisInterface;
             psDecl->value.interface.ui32ArraySize = arrayLen;
 
-            psShader->funcPointer[interfaceID].ui32NumBodiesPerTable = psDecl->ui32TableLength;
+            psShader->funcPointer[(int)interfaceID].ui32NumBodiesPerTable = psDecl->ui32TableLength;
 
             for(;func < numClassesImplementingThisInterface; ++func)
             {
                 uint32_t ui32FuncTable = *(pui32Token+ui32OperandOffset);
-                psShader->aui32FuncTableToFuncPointer[ui32FuncTable] = interfaceID;
+                psShader->aui32FuncTableToFuncPointer[(int)ui32FuncTable] = interfaceID;
 
-                psShader->funcPointer[interfaceID].aui32FuncTables[func] = ui32FuncTable;
+                psShader->funcPointer[(int)interfaceID].aui32FuncTables[(int)func] = ui32FuncTable;
                 ui32OperandOffset++;
             }
 
@@ -562,9 +561,9 @@ const uint32_t* DecodeDeclaration(Shader* psShader, const uint32_t* pui32Token, 
             {
                 const uint32_t ui32FuncBodyID = pui32Token[ui32OperandOffset++];
 
-                psShader->aui32FuncBodyToFuncTable[ui32FuncBodyID] = ui32FuncTableID;
+                psShader->aui32FuncBodyToFuncTable[(int)ui32FuncBodyID] = ui32FuncTableID;
 
-                psShader->funcTable[ui32FuncTableID].aui32FuncBodies[ui32Func] = ui32FuncBodyID;
+                psShader->funcTable[(int)ui32FuncTableID].aui32FuncBodies[(int)ui32Func] = ui32FuncBodyID;
 
             }
 
@@ -612,6 +611,10 @@ const uint32_t* DecodeDeclaration(Shader* psShader, const uint32_t* pui32Token, 
 				//const uint32_t ui32TupleCount = (ui32ConstCount / 4);
 				CUSTOMDATA_CLASS eClass = DecodeCustomDataClass(pui32Token[0]);
 
+                (void)iTupleSrc; // unused variable
+                (void)iTupleDest; // unused variable
+                (void)eClass; // unused variable
+
 				const uint32_t ui32NumVec4 = (ui32TokenLength - 2) / 4;
 				uint32_t uIdx = 0;
 
@@ -652,6 +655,9 @@ const uint32_t* DecodeDeclaration(Shader* psShader, const uint32_t* pui32Token, 
         {
             ResourceBinding* psBinding = NULL;
             ConstantBuffer* psBuffer = NULL;
+
+            (void)psBinding; // unused variable
+            (void)psBuffer; // unused variable
 
             psDecl->ui32NumOperands = 1;
             psDecl->sUAV.ui32GloballyCoherentAccess = DecodeAccessCoherencyFlags(*pui32Token);
@@ -716,6 +722,9 @@ const uint32_t* DecodeDeclaration(Shader* psShader, const uint32_t* pui32Token, 
             ResourceBinding* psBinding = NULL;
             ConstantBuffer* psBuffer = NULL;
 
+            (void)psBinding; // unused variable
+            (void)psBuffer; // unused variable
+
             psDecl->ui32NumOperands = 1;
             psDecl->sUAV.ui32GloballyCoherentAccess = 0;
 
@@ -729,6 +738,9 @@ const uint32_t* DecodeDeclaration(Shader* psShader, const uint32_t* pui32Token, 
         {
             ResourceBinding* psBinding = NULL;
             ConstantBuffer* psBuffer = NULL;
+
+            (void)psBinding; // unused variable
+            (void)psBuffer; // unused variable
 
             psDecl->ui32NumOperands = 1;
             psDecl->sUAV.ui32GloballyCoherentAccess = 0;
@@ -788,11 +800,11 @@ const uint32_t* DeocdeInstruction(const uint32_t* pui32Token, Instruction* psIns
             {
                 psInst->bAddressOffset = 1;
 
-                psInst->iUAddrOffset = DecodeImmediateAddressOffset(
+                psInst->iUAddrOffset = (int)DecodeImmediateAddressOffset(
 							    IMMEDIATE_ADDRESS_OFFSET_U, ui32ExtOpcodeToken);
-			    psInst->iVAddrOffset = DecodeImmediateAddressOffset(
+			    psInst->iVAddrOffset = (int)DecodeImmediateAddressOffset(
 							    IMMEDIATE_ADDRESS_OFFSET_V, ui32ExtOpcodeToken);
-			    psInst->iWAddrOffset = DecodeImmediateAddressOffset(
+			    psInst->iWAddrOffset = (int)DecodeImmediateAddressOffset(
 							    IMMEDIATE_ADDRESS_OFFSET_W, ui32ExtOpcodeToken);
             }
 			else if(eExtType == EXTENDED_OPCODE_RESOURCE_RETURN_TYPE)
@@ -1154,7 +1166,7 @@ const uint32_t* DeocdeInstruction(const uint32_t* pui32Token, Instruction* psIns
             // Throw an explicit exception now, otherwise we will continue to
             // use the uninitialised ui32NumOperands and process garbage.
             LogInfo("    error parsing shader> unsupported opcode %i\n", eOpcode);
-            throw decompileError;
+            throw DecompileError();
         }
     }
 
@@ -1177,12 +1189,12 @@ void UpdateOperandReferences(Shader* psShader, Instruction* psInst)
             {
                 if(psOperand->aui32ArraySizes[1] != 0)//gl_in[].gl_Position
                 {
-                    psShader->abInputReferencedByInstruction[psOperand->ui32RegisterNumber] = 1;
+                    psShader->abInputReferencedByInstruction[(int)psOperand->ui32RegisterNumber] = 1;
                 }
             }
             else
             {
-                psShader->abInputReferencedByInstruction[psOperand->ui32RegisterNumber] = 1;
+                psShader->abInputReferencedByInstruction[(int)psOperand->ui32RegisterNumber] = 1;
             }
         }
     }
@@ -1255,7 +1267,7 @@ const uint32_t* DecodeShaderPhase(const uint32_t* pui32Tokens,
 	return pui32CurrentToken;
 }
 
-const void AllocateHullPhaseArrays(const uint32_t* pui32Tokens,
+void AllocateHullPhaseArrays(const uint32_t* pui32Tokens,
 								   Shader* psShader,
 								   uint32_t ui32Phase,
 								   OPCODE_TYPE ePhaseOpcode)
@@ -1269,6 +1281,8 @@ const void AllocateHullPhaseArrays(const uint32_t* pui32Tokens,
 		uint32_t ui32TokenLength = DecodeInstructionLength(*pui32CurrentToken);
 		const uint32_t bExtended = DecodeIsOpcodeExtended(*pui32CurrentToken);
 		const OPCODE_TYPE eOpcode = DecodeOpcodeType(*pui32CurrentToken);
+
+        (void)bExtended; // unused variable
 
 		if(eOpcode == OPCODE_CUSTOMDATA)
 		{
@@ -1391,7 +1405,7 @@ Shader* DecodeDXBC(uint32_t* data)
         //looks valid then we continue
         uint32_t type = DecodeShaderTypeDX9(data[0]);
 
-        if(type != INVALID_SHADER)
+        if(type != (uint32_t)INVALID_SHADER)
         {
             return DecodeDX9BC(data);
         }

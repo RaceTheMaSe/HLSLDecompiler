@@ -87,13 +87,13 @@ struct ICBVec4 {
 
 struct Declaration
 {
-    OPCODE_TYPE eOpcode;
+    OPCODE_TYPE eOpcode{};
 
-    uint32_t ui32NumOperands;
+    uint32_t ui32NumOperands{};
 
-    Operand asOperands[2];
+    Operand asOperands[2]{};
 
-	ICBVec4 asImmediateConstBuffer[MAX_IMMEDIATE_CONST_BUFFER_VEC4_SIZE];
+	ICBVec4 asImmediateConstBuffer[MAX_IMMEDIATE_CONST_BUFFER_VEC4_SIZE]{};
     //The declaration can set one of these
     //values depending on the opcode.
     union {
@@ -120,7 +120,7 @@ struct Declaration
             uint32_t ui32NumFuncTables;
             uint32_t ui32ArraySize;
         } interface;
-    } value;
+    } value{};
 
     struct UAV_TAG
     {
@@ -128,17 +128,17 @@ struct Declaration
         uint32_t ui32BufferSize;
 		uint8_t bCounter;
 		RESOURCE_RETURN_TYPE Type;
-    } sUAV;
+    } sUAV{};
 
     struct TGSM
     {
         uint32_t ui32Stride;
         uint32_t ui32Count;
-    } sTGSM;
+    } sTGSM{};
 
-    uint32_t ui32TableLength;
+    uint32_t ui32TableLength{};
 
-	uint32_t ui32IsShadowTex;
+	uint32_t ui32IsShadowTex{};
 
 };
 
@@ -175,7 +175,7 @@ struct Shader
 
     GLLang eTargetLanguage;
 
-	int fp64;
+	int fp64{};
 
     //DWORDs in program code, including version and length tokens.
     uint32_t ui32ShaderLength;
@@ -223,19 +223,21 @@ struct Shader
 	//int aiOpcodeUsed[NUM_OPCODES];
 
 	bool dx9Shader; // 3DMIGOTO ADDITION
-	uint32_t ui32CurrentVertexOutputStream;
+	uint32_t ui32CurrentVertexOutputStream{};
 
 	Shader() :
 		ui32MajorVersion(0),
 		ui32MinorVersion(0),
+        eShaderType(),
+        eTargetLanguage(),
 		ui32ShaderLength(0),
-		pui32FirstToken(0),
-		asPhase(),
 		aui32FuncTableToFuncPointer(),
 		aui32FuncBodyToFuncTable(),
 		funcTable(),
 		funcPointer(),
 		ui32NextClassFuncName(),
+		pui32FirstToken(0),
+		asPhase(),
 		abScalarInput(),
 		aIndexedOutput(),
 		aIndexedInput(),

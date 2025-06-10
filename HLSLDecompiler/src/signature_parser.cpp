@@ -2,6 +2,7 @@
 #include "assembler.h"
 #include "log.h"
 #include "shader.h"
+#include <algorithm>
 
 #define SFI_RAW_STRUCT_BUF (1LL<<1)
 #define SFI_MIN_PRECISION  (1LL<<4)
@@ -22,8 +23,8 @@ static std::string next_line(std::string *shader, size_t *pos)
 	start_pos = shader->find_first_not_of(" \t\r", start_pos);
 
 	// Blank line at end of file:
-	if (start_pos == shader->npos) {
-		*pos = shader->npos;
+	if (start_pos == std::string::npos) {
+		*pos = std::string::npos;
 		return "";
 	}
 
@@ -34,7 +35,7 @@ static std::string next_line(std::string *shader, size_t *pos)
 	// can't rely on whitespace here so still strip it):
 	end_pos = shader->find_last_not_of(" \t\n\r", *pos) + 1;
 
-	if (*pos != shader->npos)
+	if (*pos != std::string::npos)
 		(*pos)++; // Brackets are important
 
 	return shader->substr(start_pos, end_pos - start_pos);
@@ -43,7 +44,7 @@ static std::string next_line(std::string *shader, size_t *pos)
 struct format_type {
 	uint32_t format;
 	uint32_t min_precision;
-	char *name;
+	const char *name;
 };
 
 static format_type format_names[] = {
@@ -57,7 +58,7 @@ static format_type format_names[] = {
 	{3, 2, "min2_8f" }, // min10float
 };
 
-static void parse_format(char *format, uint32_t *format_number, uint32_t *min_precision)
+static void parse_format(const char *format, uint32_t *format_number, uint32_t *min_precision)
 {
 	uint32_t i;
 
@@ -69,12 +70,12 @@ static void parse_format(char *format, uint32_t *format_number, uint32_t *min_pr
 		}
 	}
 
-	throw parseError;
+	throw AsmSignatureParseError();
 }
 
 struct svt {
 	uint32_t val;
-	char *short_name;
+	const char *short_name;
 };
 
 static svt system_value_abbreviations[] = {
@@ -124,7 +125,7 @@ static svt system_value_abbreviations[] = {
 	// sections.
 };
 
-static uint32_t parse_system_value(char *sv)
+static uint32_t parse_system_value(const char *sv)
 {
 	uint32_t i;
 
@@ -133,10 +134,10 @@ static uint32_t parse_system_value(char *sv)
 			return system_value_abbreviations[i].val;
 	}
 
-	throw parseError;
+	throw AsmSignatureParseError();
 }
 
-static uint8_t parse_mask(char mask[8], bool invert)
+static uint8_t parse_mask(const char mask[8], bool invert)
 {
 	uint8_t xor_val = (invert ? 0xf : 0);
 	uint8_t ret = 0;
@@ -171,7 +172,7 @@ static uint8_t parse_mask(char mask[8], bool invert)
 			case '/': // N/A
 				return 0x1 ^ xor_val;
 			default:
-				throw parseError;
+				throw AsmSignatureParseError();
 		}
 	}
 	return ret ^ xor_val;
@@ -182,7 +183,7 @@ static uint32_t pad(uint32_t size, uint32_t multiple)
 	return (multiple - size % multiple) % multiple;
 }
 
-static void* serialise_signature_section(char *section24, char *section28, char *section32, int entry_size,
+static void* serialise_signature_section(const char *section24, const char *section28, const char *section32, int entry_size,
 		std::vector<struct sgn_entry_unserialised> *entries, uint32_t name_len)
 {
 	void *section;
@@ -231,7 +232,7 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 	entry1 = (sg1_entry_serialiased*)entryn;
 
 	LogDebug("section: 0x%p, section_header: 0x%p, sgn_header: 0x%p, padding_ptr: 0x%p, entry: 0x%p\n",
-			section, (char*)section_header, sgn_header, padding_ptr, entryn);
+			section, (char*)section_header, (void*)sgn_header, padding_ptr, (void*)entryn);
 
 	switch (entry_size) {
 		case 24:
@@ -244,7 +245,7 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 			memcpy(&section_header->signature, section32, 4);
 			break;
 		default:
-			throw parseError;
+			throw AsmSignatureParseError();
 	}
 	section_header->size = section_size + padding;
 
@@ -271,6 +272,7 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 				memcpy(name_ptr, unserialised.name.c_str(), unserialised.name.size() + 1);
 				memcpy(&entryn->common, &unserialised.common, sizeof(sgn_entry_common));
 				entryn++;
+			default: break;
 		}
 	}
 
@@ -279,7 +281,7 @@ static void* serialise_signature_section(char *section24, char *section28, char 
 	return section;
 }
 
-static void* parse_signature_section(char *section24, char *section28, char *section32, std::string *shader, size_t *pos, bool invert_used, uint64_t sfi)
+static void* parse_signature_section(const char *section24, const char *section28, const char *section32, std::string *shader, size_t *pos, bool invert_used, uint64_t sfi)
 {
 	std::string line;
 	size_t old_pos = *pos;
@@ -297,7 +299,7 @@ static void* parse_signature_section(char *section24, char *section28, char *sec
 
 	// If minimum precision formats are in use we bump the section versions:
 	if (sfi & SFI_MIN_PRECISION)
-		entry_size = max(entry_size, 32);
+		entry_size = (std::max)(entry_size, 32);
 
 	while (*pos != std::string::npos)
     {
@@ -353,7 +355,7 @@ static void* parse_signature_section(char *section24, char *section28, char *sec
 				&entry.stream,
 				semantic_name2, (unsigned)ARRAYSIZE(semantic_name2));
 		if (numRead == 2) {
-			entry_size = max(entry_size, 28);
+			entry_size = (std::max)(entry_size, 28);
 			entry.name = semantic_name2;
 		} else {
 			entry.stream = 0;
@@ -365,11 +367,11 @@ static void* parse_signature_section(char *section24, char *section28, char *sec
 		// redundant now that we bump the version based on SFI):
 		parse_format(format, &entry.common.format, &entry.min_precision);
 		if (entry.min_precision)
-			entry_size = max(entry_size, 32);
+			entry_size = (std::max)(entry_size, 32);
 
 		// Try parsing register as a decimal number. If it is not, it
 		// is a special purpose register, in which case we store -1:
-		if (numRead = sscanf_s(reg, "%d", &entry.common.reg) == 0)
+		if ((numRead = sscanf_s(reg, "%d", &entry.common.reg)) == 0)
 			entry.common.reg = 0xffffffff;
 
 		entry.common.system_value = parse_system_value(system_value);
@@ -447,7 +449,7 @@ static void* serialise_subshader_feature_info_section(uint64_t flags)
 struct gf_sfi {
 	uint64_t sfi;
 	int len;
-	char *gf;
+	const char *gf;
 };
 
 static gf_sfi global_flag_sfi_map[] = {
@@ -464,7 +466,7 @@ static gf_sfi global_flag_sfi_map[] = {
 	// "allResourcesBound"
 };
 
-static char *subshader_feature_comments[] = {
+static const char *subshader_feature_comments[] = {
 	// d3dcompiler_46:
 	"Double-precision floating point",
 	//"Early depth-stencil", // d3dcompiler46/47 produces this output for [force, but it does *NOT* map to an SFI flag
@@ -499,7 +501,7 @@ uint64_t parse_global_flags_to_sfi(std::string *shader)
 	uint64_t sfi = 0LL;
 	std::string line;
 	size_t pos = 0, gf_pos = 16;
-	int i;
+	unsigned int i;
 
 	while (pos != std::string::npos)
     {
@@ -537,7 +539,7 @@ static uint64_t parse_subshader_feature_info_comment(std::string *shader, size_t
 	size_t old_pos = *pos;
 	uint32_t i;
 
-	while (*pos != shader->npos) {
+	while (*pos != std::string::npos) {
 		line = next_line(shader, pos);
 
 		LogDebug("%s\n", line.c_str());
@@ -560,7 +562,7 @@ static uint64_t parse_subshader_feature_info_comment(std::string *shader, size_t
 	return flags;
 }
 
-static void* manufacture_empty_section(char *section_name)
+static void* manufacture_empty_section(const char *section_name)
 {
 	void *section;
 
@@ -583,7 +585,7 @@ static bool is_hull_shader(std::string *shader, size_t start_pos)
 	std::string line;
 	size_t pos = start_pos;
 
-	while (pos != shader->npos) {
+	while (pos != std::string::npos) {
 		line = next_line(shader, &pos);
 		if (!strncmp(line.c_str(), "hs_4_", 5))
 			return true;
@@ -602,7 +604,7 @@ static bool is_geometry_shader_5(std::string *shader, size_t start_pos) {
 	std::string line;
 	size_t pos = start_pos;
 
-	while (pos != shader->npos) {
+	while (pos != std::string::npos) {
 		line = next_line(shader, &pos);
 		if (!strncmp(line.c_str(), "gs_5_", 5))
 			return true;
@@ -639,7 +641,7 @@ static bool parse_section(std::string *line, std::string *shader, size_t *pos, v
 		*section = parse_signature_section("ISGN", NULL, "ISG1", shader, pos, false, *sfi);
 	} else if (!strncmp(line->c_str(), "// Output signature:", 20)) {
 		LogInfo("Parsing Output Signature section...\n");
-		char *section24 = "OSGN";
+		const char *section24 = "OSGN";
 		if (is_geometry_shader_5(shader, *pos))
 			section24 = nullptr;
 		*section = parse_signature_section(section24, "OSG5", "OSG1", shader, pos, true, *sfi);
@@ -777,7 +779,7 @@ std::vector<byte> AssembleFluganWithOptionalSignatureParsing(std::vector<char> *
 
 	HRESULT hr = AssembleFluganWithSignatureParsing(assembly, &new_bytecode, parse_errors);
 	if (FAILED(hr))
-		throw parseError;
+		throw AsmSignatureParseError();
 
 	return new_bytecode;
 }

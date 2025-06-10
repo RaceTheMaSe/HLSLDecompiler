@@ -3,7 +3,7 @@
 
 #include "binary_decompiler.h"
 
-#include <D3DCompiler.h>
+#include <d3dcompiler.h>
 #include "decompile_hlsl.h"
 #include "version.h"
 #include "log.h"
@@ -12,13 +12,14 @@
                      // The DX9 decompiler is more interesting, which is unrelated to this flag.
 #include "util.h"
 #include "shader.h"
+#include <algorithm>
 
 using namespace std;
 
 FILE *LogFile = stderr; // Log to stderr by default
 bool gLogDebug = false;
 
-static void PrintHelp(int argc, char *argv[])
+static void PrintHelp(int /*argc*/, char *argv[])
 {
     LogInfo("usage: %s [OPTION] FILE...\n\n", argv[0]);
     LogInfo("  -D, --decompile\n");
@@ -205,7 +206,7 @@ static HRESULT DisassembleMS(const void *pShaderBytecode, size_t BytecodeLength,
 
     if (FAILED(hr))
     {
-        LogInfo("  Disassembly failed. Error: %x\n", hr);
+        LogInfo("  Disassembly failed. Error: %lx\n", hr);
         return hr;
     }
 
@@ -241,7 +242,7 @@ static int validate_section(char section[4], unsigned char *old_section, unsigne
 
 		if (!rc)
 			LogInfo("\n*** Assembly verification pass failed: mismatch in section %.4s:\n", section);
-		LogInfo("  %.4s+0x%04Ix (0x%08Ix): expected 0x%02x, found 0x%02x\n",
+		LogInfo("  %.4s+0x%04llx (0x%08llx): expected 0x%02x, found 0x%02x\n",
 				section, pos, off+pos, *p1, *p2);
 		rc = 1;
 	}
@@ -272,7 +273,7 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
         hret = AssembleFluganWithSignatureParsing(&assembly_vec, &new_shader);
         if (FAILED(hret))
         {
-            LogInfo("\n*** Assembly verification pass failed: Reassembly failed 0x%x\n", hret);
+            LogInfo("\n*** Assembly verification pass failed: Reassembly failed 0x%lx\n", hret);
             return 1;
         }
     } catch (AssemblerParseError &e)
@@ -299,7 +300,7 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
 		for (j = 0; j < new_dxbc_header->num_sections; j++, new_section_offset_ptr++) {
 			new_section_header = (struct section_header*)((char*)new_dxbc_header + *new_section_offset_ptr);
 
-			if (memcmp(old_section_header->signature, new_section_header->signature, 4)) {
+			if (memcmp(old_section_header->signature, new_section_header->signature, 4) != 0) {
 				// If it's a mismatch between SHDR and SHEX
 				// (SHader EXtension) we'll flag a failure and
 				// warn, but still compare since the sections
@@ -320,7 +321,7 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
 
 			LogDebug(" Checking section %.4s...", old_section_header->signature);
 
-			size = min(old_section_header->size, new_section_header->size);
+			size = (std::min)(old_section_header->size, new_section_header->size);
 			old_section = (unsigned char*)old_section_header + sizeof(struct section_header);
 			new_section = (unsigned char*)new_section_header + sizeof(struct section_header);
 
@@ -350,10 +351,10 @@ static int validate_assembly(string *assembly, vector<char> *old_shader)
 		if (j == new_dxbc_header->num_sections) {
 			// Whitelist sections that are okay to be missed:
 			if (!args_cache.lenient &&
-			    strncmp(old_section_header->signature, "STAT", 4) && // Compiler Statistics
-			    strncmp(old_section_header->signature, "RDEF", 4) && // Resource Definitions
-			    strncmp(old_section_header->signature, "SDBG", 4) && // Debug Info
-			    strncmp(old_section_header->signature, "Aon9", 4)) { // Level 9 shader bytecode
+			    strncmp(old_section_header->signature, "STAT", 4) != 0 && // Compiler Statistics
+			    strncmp(old_section_header->signature, "RDEF", 4) != 0 && // Resource Definitions
+			    strncmp(old_section_header->signature, "SDBG", 4) != 0 && // Debug Info
+			    strncmp(old_section_header->signature, "Aon9", 4) != 0) { // Level 9 shader bytecode
 			    //strncmp(old_section_header->signature, "SFI0", 4)) { // Subtarget Feature Info (not yet sure if this is critical or not)
 				LogInfo("*** Assembly verification pass failed: Reassembled shader missing %.4s section (not whitelisted)\n", old_section_header->signature);
 				rc = 1;

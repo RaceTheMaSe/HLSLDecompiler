@@ -33,7 +33,7 @@ enum GLLang
     LANG_430,
     LANG_440,
 };
-constexpr int LANG_ES_310 = 10;
+const int LANG_ES_310 = 10;
 
 enum {MAX_SHADER_VEC4_OUTPUT = 512};
 enum {MAX_SHADER_VEC4_INPUT = 512};
@@ -237,30 +237,24 @@ enum SHADER_VARIABLE_CLASS
 
 struct ShaderVarType 
 {
-    SHADER_VARIABLE_CLASS Class;
-    SHADER_VARIABLE_TYPE  Type;
-    uint32_t              Rows;
-    uint32_t              Columns;
-    uint32_t              Elements;
-    uint32_t              MemberCount;
-    uint32_t              Offset;
-    uint32_t              ParentCount;
-    ShaderVarType*        Parent;
-    ShaderVarType*        Members;
+    SHADER_VARIABLE_CLASS Class{};
+    SHADER_VARIABLE_TYPE  Type{};
+    uint32_t              Rows{};
+    uint32_t              Columns{};
+    uint32_t              Elements{};
+    uint32_t              MemberCount{};
+    uint32_t              Offset{};
+    uint32_t              ParentCount{};
+    ShaderVarType*        Parent = nullptr;
+    ShaderVarType*        Members = nullptr;
 
     std::string           Name;
     std::string           FullName;
 
-    ShaderVarType() 
-    : Members(nullptr)
-    {}
-
+    ShaderVarType() = default;
     ~ShaderVarType()
     {
-        if (Members)
-        {
-            delete[] Members;
-        }  
+        delete[] Members;
     }
 };
 
@@ -363,23 +357,25 @@ struct ShaderInfo
 	ShaderInfo() :
 		ui32MajorVersion(0),
 		ui32MinorVersion(0),
-		psInputSignatures(0),
 		ui32NumInputSignatures(0),
-		psOutputSignatures(0), 
+		psInputSignatures(0),
 		ui32NumOutputSignatures(0),
-		psPatchConstantSignatures(0),
+		psOutputSignatures(0), 
 		ui32NumPatchConstantSignatures(0),
-		psResourceBindings(0),
+		psPatchConstantSignatures(0),
 		ui32NumResourceBindings(0),
+		psResourceBindings(0),
 		ui32NumConstantBuffers(0),
 		psConstantBuffers(0),
 		psThisPointerConstBuffer(0),
-		psClassTypes(0),
 		ui32NumClassTypes(0),
-		psClassInstances(0),
+		psClassTypes(0),
 		ui32NumClassInstances(0),
+		psClassInstances(0),
 		aui32TableIDToTypeID(),
-		aui32ResourceMap()
+		aui32ResourceMap(),
+        eTessPartitioning(),
+        eTessOutPrim()
 	{
 	}
 };

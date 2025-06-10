@@ -8,6 +8,8 @@
 // namespacing of an enum class that behaves like an int as an enum does. Not
 // sure why C++ had to try to solve two problems at once and in doing so
 // created a brand new problem...
+#include <cstddef>
+
 #define SENSIBLE_ENUM(ENUMTYPE) \
 inline int operator | (ENUMTYPE a, ENUMTYPE b) { return (((int)a) | ((int)b)); } \
 inline int operator & (ENUMTYPE a, ENUMTYPE b) { return (((int)a) & ((int)b)); } \

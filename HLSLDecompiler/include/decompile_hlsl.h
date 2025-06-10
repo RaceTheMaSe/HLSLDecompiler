@@ -36,9 +36,9 @@ struct DecompilerSettings
 		IniParamsReg(-1),
 		fixSvPosition(false),
 		recompileVs(false),
+		ZRepair_DepthBuffer(false),
 		ZRepair_DepthTextureReg1('\0'),
-		ZRepair_DepthTextureReg2('\0'),
-		ZRepair_DepthBuffer(false)
+		ZRepair_DepthTextureReg2('\0')
 	{}
 };
 
@@ -57,4 +57,4 @@ struct ParseParameters
 	DecompilerSettings *G;
 };
 
-const std::string DecompileBinaryHLSL(ParseParameters &params, bool &patched, std::string &shaderModel, bool &errorOccurred);
+std::string DecompileBinaryHLSL(ParseParameters &params, bool &patched, std::string &shaderModel, bool &errorOccurred);

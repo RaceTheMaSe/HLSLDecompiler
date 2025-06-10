@@ -23,6 +23,7 @@
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <cmath>
 
 #include "decompile_hlsl.h"
 
@@ -32,6 +33,7 @@
 #include <excpt.h>
 
 #include <cassert>
+#include <cstring>
 #include "log.h"
 #include "version.h"
 
@@ -96,10 +98,10 @@ enum DataType
 };
 struct BufferEntry
 {
-	DataType bt;
-	int matrixRow;
-	bool isRowMajor;
-	string Name;
+	DataType bt{};
+	int matrixRow{};
+	bool isRowMajor{};
+	string Name{};
 };
 // Key is register << 16 + offset
 typedef map<int, BufferEntry> CBufferData;
@@ -108,11 +110,11 @@ typedef map<string, string> StringStringMap;
 //dx9
 struct ConstantValue
 {
-	string name;
-	float x;
-	float y;
-	float z;
-	float w;
+	string name{};
+	float x{};
+	float y{};
+	float z{};
+	float w{};
 };
 //dx9
 
@@ -166,7 +168,7 @@ public:
 	map<string, DataType> mOutputRegisterType;
 	string mShaderType;
 	string mSV_Position;
-	bool mUsesProjection;
+	bool mUsesProjection{};
 	Instruction *mLastStatement;
 	string mMulOperand, mMulOperand2, mMulTarget;
 	StringStringMap mCorrectedIndexRegisters;
@@ -174,12 +176,12 @@ public:
 	vector<pair<string, string> > mRemappedInputRegisters;
 	set<string> mBooleanRegisters;
 
-	DecompilerSettings *G;
+	DecompilerSettings *G{};
 
 	vector<char> mOutput;
-	size_t mCodeStartPos;		// Used as index into buffer, name misleadingly suggests pointer usage.
-	bool mErrorOccurred;
-	bool mPatched;
+	size_t mCodeStartPos{};		// Used as index into buffer, name misleadingly suggests pointer usage.
+	bool mErrorOccurred{};
+	bool mPatched{};
 	int uuidVar;
 
 	// Auto-indent of generated code
@@ -261,7 +263,7 @@ public:
 	// Just take the current input line, and copy it to the output.
 	// This is used when we aren't sure what to do with something, and gives us the lines
 	// in the output as ASM for reference. Specifically modifying the input pos.
-	void ASMLineOut(const char *c, size_t &pos, size_t max)
+	void ASMLineOut(const char *c, size_t &pos, size_t /*max*/)
 	{
 		char buffer[256];
 
@@ -298,7 +300,7 @@ public:
 	// This does also unfortunately create warnings for the TEXCOORD outputs, but
 	// I was unable to find any other way to avoid the fxc packing optimization.
 
-	bool SkipPacking(const char *c, map<string, DataType> inUse)
+	static bool SkipPacking(const char *c, map<string, DataType> inUse)
 	{
 		char name[256], mask[16], sysvalue[16], format[16];
 		int index, reg1, reg2; format[0] = 0; mask[0] = 0;
@@ -320,7 +322,8 @@ public:
 			return false;
 
 		// skip pointer in order to parse next line
-		while (c[pos] != 0x0a && pos < 200) pos++; pos++;
+		while (c[pos] != 0x0a && pos < 200) pos++; 
+		pos++;
 
 		numRead = sscanf_s(c + pos, "// %s %d %s %d %s %s",
 			name, UCOUNTOF(name), &index, mask, UCOUNTOF(mask), &reg2, sysvalue, UCOUNTOF(sysvalue), format, UCOUNTOF(format));
@@ -360,15 +363,15 @@ public:
 	// Input Signature, so we are fetching them from the already parsed James-
 	// Jones input.  Otherwise we'd need to parse the dcl_input_ps phrases.
 
-	string GetInterpolation(Shader *shader, string vRegister)
+	static string GetInterpolation(Shader *shader, const string& vRegister)
 	{
-		string interpolation = "";
+		string interpolation;
 
-		for each(Declaration declaration in shader->asPhase[MAIN_PHASE].ppsDecl[0])
+		for(const Declaration& declaration : shader->asPhase[MAIN_PHASE].ppsDecl[0])
 		{
 			if (declaration.eOpcode == OPCODE_DCL_INPUT_PS)
 			{
-				int regOut = stoi(vRegister.substr(1));
+				unsigned int regOut = stoi(vRegister.substr(1));
 				uint32_t binReg = declaration.asOperands[0].ui32RegisterNumber;
 				if (regOut == binReg)
 				{
@@ -682,6 +685,7 @@ public:
 				char sysValue[64];
 				int numRead = sscanf_s(c + pos, "// %s %d %s %s %s %s",
 					name, UCOUNTOF(name), &index, mask, UCOUNTOF(mask), sysValue, UCOUNTOF(sysValue), format2, UCOUNTOF(format2), format, UCOUNTOF(format));
+				(void)numRead; // set but not used
 				// Write.
 				char buffer[256];
 				sprintf(buffer, "  %s = 0;\n", sysValue);
@@ -700,7 +704,7 @@ public:
 	}
 
 	//dx9
-	size_t getLineEnd(const char * c, size_t size, size_t & pos, bool & foundLineEnd)
+	static size_t getLineEnd(const char * c, size_t size, size_t & pos, bool & foundLineEnd)
 	{
 		size_t lineStart = pos;
 		while (pos < size)
@@ -731,7 +735,7 @@ public:
 		return pos;
 	}
 
-	void SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c)
+	static void SplitString(const std::string& s, std::vector<std::string>& v, const std::string& c)
 	{
 		std::string::size_type pos1, pos2;
 		pos2 = s.find(c);
@@ -763,6 +767,8 @@ public:
 		size_t pos = 0;
 		bool parseParameters = false;
 		bool parseRegisters = false;
+
+		(void)parseParameters; // set but not used
 
 		while (pos < size)
 		{
@@ -885,7 +891,7 @@ public:
 				logDecompileError("Error parsing resource declaration: " + string(c + pos, 80));
 
 			int slot = 0;
-			for (int i = 0; i < sizeof(bind) && bind[i]; ++i)
+			for (size_t i = 0; i < sizeof(bind) && bind[i]; ++i)
 			{
 				if (bind[i] >= '0' && bind[i] <= '9')
 				{
@@ -1116,12 +1122,13 @@ public:
 				return 48;
 			case DT_float4x4:
 				return 64;
+			default: break;
 		}
 		logDecompileError("Unknown data type in getDataTypeSize");
 		return 0;
 	}
 
-	void ParseBufferDefinitions(Shader *shader, const char *c, size_t size)
+	void ParseBufferDefinitions(Shader * /*shader*/, const char *c, size_t size)
 	{
 		mUsesProjection = false;
 		mCBufferData.clear();
@@ -1131,7 +1138,8 @@ public:
 		immediateEntry.matrixRow = 0;
 		immediateEntry.isRowMajor = false;
 		immediateEntry.bt = DT_float4;
-		mCBufferData[-1 << 16] = immediateEntry;
+		uint32_t registerAndOffset = (uint32_t)-1 << 16;
+		mCBufferData[(int)registerAndOffset] = immediateEntry;
 		vector<int> pendingStructAttributes[8];
 		int structLevel = -1;
 		// Search for buffer.
@@ -1344,7 +1352,7 @@ public:
 				*/
 
 				// Uses projection matrix?
-				if (e.bt == DT_float4x4 && e.Name.find_first_of("Projection") >= 0)
+				if (e.bt == DT_float4x4 && e.Name.find_first_of("Projection") != std::string::npos)
 				{
 					eolPos = strchr(c + pos, '\n');
 					// Used?
@@ -1353,7 +1361,7 @@ public:
 				}
 
 				// SR3 variant of projection matrix.
-				if (e.bt == DT_float4x4 && e.Name.find_first_of("projTM") >= 0)
+				if (e.bt == DT_float4x4 && e.Name.find_first_of("projTM") != std::string::npos)
 				{
 					eolPos = strchr(c + pos, '\n');
 					// Used?
@@ -1411,11 +1419,13 @@ public:
 								e.matrixRow = 3;
 								offsetPos = (bufferRegister << 16) + offset + i*counter + 3 * 16;
 								mCBufferData[offsetPos] = e; if (structLevel >= 0) pendingStructAttributes[structLevel].push_back(offsetPos);
+								// fallthrough
 							case DT_float4x3:
 							case DT_float3x3:
 								e.matrixRow = 2;
 								offsetPos = (bufferRegister << 16) + offset + i*counter + 2 * 16;
 								mCBufferData[offsetPos] = e; if (structLevel >= 0) pendingStructAttributes[structLevel].push_back(offsetPos);
+								// fallthrough
 							case DT_float4x2:
 								e.matrixRow = 1;
 								offsetPos = (bufferRegister << 16) + offset + i*counter + 1 * 16;
@@ -1551,7 +1561,7 @@ public:
 							numRead = sscanf_s(c + pos, "//%*[ =]0x%lx 0x%lx 0x%lx 0x%lx", (unsigned long*)&v[i * 4 + 0], (unsigned long*)&v[i * 4 + 1], (unsigned long*)&v[i * 4 + 2], (unsigned long*)&v[i * 4 + 3]);
 							if (numRead != 4)
 							{
-								logDecompileError("Default values for float4x4 not read correctly, n:" + numRead);
+								logDecompileError("Default values for float4x4 not read correctly, n:" + std::to_string(numRead));
 								break;
 							}
 							NextLine(c, pos, size);
@@ -1612,7 +1622,7 @@ public:
 						sprintf(buffer, "  %s%s%s %s;\n", structSpacing.c_str(), modifier.c_str(), type, name);
 					mOutput.insert(mOutput.end(), buffer, buffer + strlen(buffer));
 				}
-			} while (strncmp(c + pos, "// }", 4));
+			} while (strncmp(c + pos, "// }", 4) != 0);
 			
 			// Write closing declaration.
 			const char *endBuffer = "}\n";
@@ -1637,7 +1647,7 @@ public:
 
 	bool warn_if_line_is_not(const char *expect, const char *c)
 	{
-		if (strncmp(c, expect, strlen(expect))) {
+		if (strncmp(c, expect, strlen(expect)) != 0) {
 			logDecompileError("WARNING: Unexpected string in shader"
 					"\n  Expected: " + string(expect) +
 					"\n     Found: " + string(c, 80));
@@ -1646,7 +1656,7 @@ public:
 		return false;
 	}
 
-	void ParseStructureDefinitions(Shader *shader, const char *c, size_t size)
+	void ParseStructureDefinitions(Shader * /*shader*/, const char *c, size_t size)
 	{
 		// Pulls out struct type declaration for structured buffers.
 		// These will be referenced later when parsing the resource
@@ -1672,7 +1682,7 @@ public:
 		int n;
 		string hlsl;
 
-		while (pos = find_next_header("// Resource bind info for ", c, pos, size)) {
+		while ((pos = find_next_header("// Resource bind info for ", c, pos, size)) != 0) {
 			n = sscanf_s(c + pos, "// Resource bind info for %s", bind_name, UCOUNTOF(bind_name));
 			if (n != 1) {
 				logDecompileError("Error parsing structure bind name: " + string(c + pos, 80));
@@ -1775,7 +1785,7 @@ public:
 		}
 	}
 
-	static void applySwizzleLiteral(char *right, char *right2, bool useInt, size_t pos, char idx[4])
+	static void applySwizzleLiteral(char *right, char *right2, bool useInt, size_t pos, const char idx[4])
 	{
 		// Single literal?
 		if (!strchr(right, ','))
@@ -1799,22 +1809,22 @@ public:
 		}
 		if (pos == 1)
 		{
-			sprintf_s(right2, opcodeSize, "%.9g", args[idx[0]]);
+			sprintf_s(right2, opcodeSize, "%.9g", args[(size_t)idx[0]]);
 		}
 		else
 		{
 			// Only integer values?
 			bool isInt = true;
 			for (int i = 0; idx[i] >= 0 && i < 4; ++i)
-				isInt = isInt && (is_hex[idx[i]] || (floor(args[idx[i]]) == args[idx[i]]));
+				isInt = isInt && (is_hex[(size_t)idx[i]] || (floor(args[(size_t)idx[i]]) == args[(size_t)idx[i]]));
 			if (isInt && useInt)
 			{
 				sprintf_s(right2, opcodeSize, "int%Id(", pos);
 				for (int i = 0; idx[i] >= 0 && i < 4; ++i) {
-					if (is_hex[idx[i]])
-						sprintf_s(right2 + strlen(right2), opcodeSize - strlen(right2), "0x%x,", hex_args[idx[i]]);
+					if (is_hex[(size_t)idx[i]])
+						sprintf_s(right2 + strlen(right2), opcodeSize - strlen(right2), "0x%x,", hex_args[(size_t)idx[i]]);
 					else
-						sprintf_s(right2 + strlen(right2), opcodeSize - strlen(right2), "%d,", int(args[idx[i]]));
+						sprintf_s(right2 + strlen(right2), opcodeSize - strlen(right2), "%d,", int(args[(size_t)idx[i]]));
 				}
 				right2[strlen(right2) - 1] = 0;
 				strcat_s(right2, opcodeSize, ")");
@@ -1823,7 +1833,7 @@ public:
 			{
 				sprintf_s(right2, opcodeSize, "float%Id(", pos);
 				for (int i = 0; idx[i] >= 0 && i < 4; ++i)
-					sprintf_s(right2 + strlen(right2), opcodeSize - strlen(right2), "%.9g,", args[idx[i]]);
+					sprintf_s(right2 + strlen(right2), opcodeSize - strlen(right2), "%.9g,", args[(size_t)idx[i]]);
 				right2[strlen(right2) - 1] = 0;
 				strcat_s(right2, opcodeSize, ")");
 			}
@@ -1863,7 +1873,7 @@ public:
 		string absTemp = right;
 
 		size_t absPos = absTemp.find("_abs");
-		if (absPos != -1)
+		if (absPos != (size_t)-1)
 		{
 			absTemp.replace(absPos, 4, "");
 			strcpy_s(right, opcodeSize, absTemp.c_str());
@@ -1908,7 +1918,7 @@ public:
 			else
 			{
 				for (int i = 0; idx[i] >= 0 && i < 4; ++i)
-					right2[pos++] = strPos[idx[i]];
+					right2[pos++] = strPos[(size_t)idx[i]];
 				right2[pos] = 0;
 			}
 
@@ -2014,7 +2024,7 @@ public:
 			else
 			{
 				for (int i = 0; idx[i] >= 0 && i < 4; ++i)
-					right2[pos++] = strPos[idx[i]];
+					right2[pos++] = strPos[(size_t)idx[i]];
 				right2[pos] = 0;
 			}
 
@@ -2271,9 +2281,9 @@ public:
 	}
 
 
-	char statement[128],
-		op1[opcodeSize], op2[opcodeSize], op3[opcodeSize], op4[opcodeSize], op5[opcodeSize], op6[opcodeSize], op7[opcodeSize], op8[opcodeSize],
-		op9[opcodeSize], op10[opcodeSize], op11[opcodeSize], op12[opcodeSize], op13[opcodeSize], op14[opcodeSize], op15[opcodeSize];
+	char statement[128]{},
+		op1[opcodeSize]{}, op2[opcodeSize]{}, op3[opcodeSize]{}, op4[opcodeSize]{}, op5[opcodeSize]{}, op6[opcodeSize]{}, op7[opcodeSize]{}, op8[opcodeSize]{},
+		op9[opcodeSize]{}, op10[opcodeSize]{}, op11[opcodeSize]{}, op12[opcodeSize]{}, op13[opcodeSize]{}, op14[opcodeSize]{}, op15[opcodeSize]{};
 	int ReadStatement(const char *pos)
 	{
 		// Kill newline.
@@ -2391,7 +2401,7 @@ public:
 		return numRead;
 	}
 
-	string replaceInt(string input)
+	static string replaceInt(string input)
 	{
 		float number;
 		if (sscanf_s(input.c_str(), "%f", &number) != 1)
@@ -2403,7 +2413,7 @@ public:
 		return buffer;
 	}
 
-	string GetSuffix(char *s, int index)
+	static string GetSuffix(char *s, int index)
 	{
 		if (s[strlen(s) - 1] == ',') s[strlen(s) - 1] = 0;
 		char *dotPos = strrchr(s, '.');
@@ -2414,7 +2424,7 @@ public:
 			size_t targetPos = buffer.find_last_of('.');
 			buffer[targetPos + 1] = dotPos[1 + index];
 			buffer.resize(targetPos + 2);
-			if (!buffer.substr(0, 4).compare("abs("))
+			if (buffer.substr(0, 4) =="abs(")
 				buffer.push_back(')');
 			return buffer;
 		}
@@ -2564,13 +2574,13 @@ public:
 			cpos[pos] = 0;
 	}
 
-	void remapTarget(char *target)
+	static void remapTarget(char *target)
 	{
 		char *pos = strchr(target, ',');
 		if (pos) *pos = 0;
 	}
 
-	void stripMask(char *target)
+	static void stripMask(char *target)
 	{
 		char *pos = strchr(target, '.');
 		if (pos) *pos = 0;
@@ -2613,7 +2623,7 @@ public:
 	//  This would generate a QNAN as float. Made the hex comparison more strict with 0x%x, and thus that will fail
 	//  if it's an int type, and allow for converting that variant.
 
-	void convertHexToFloat(char *target)
+	static void convertHexToFloat(char *target)
 	{
 		char convert[opcodeSize];
 		int count;
@@ -2647,7 +2657,7 @@ public:
 		}
 	}
 
-	char *_convertToInt(char *target, bool fixupCBs)
+	static char *_convertToInt(char *target, bool fixupCBs)
 	{
 		char buffer[opcodeSize];
 
@@ -2688,7 +2698,7 @@ public:
 		return target;
 	}
 
-	char *_convertToUInt(char *target, bool fixupCBs)
+	static char *_convertToUInt(char *target, bool fixupCBs)
 	{
 		char buffer[opcodeSize];
 
@@ -2731,22 +2741,22 @@ public:
 		return target;
 	}
 
-	char *convertToInt(char *target)
+	static char *convertToInt(char *target)
 	{
 		return _convertToInt(target, true);
 	}
 
-	char *convertToUInt(char *target)
+	static char *convertToUInt(char *target)
 	{
 		return _convertToUInt(target, true);
 	}
 
-	char *castToInt(char *target)
+	static char *castToInt(char *target)
 	{
 		return _convertToInt(target, false);
 	}
 
-	char *castToUInt(char *target)
+	static char *castToUInt(char *target)
 	{
 		return _convertToUInt(target, false);
 	}
@@ -2771,7 +2781,7 @@ public:
 	//  is intended to fix the problems we see where the assembly is using the -1 numerically
 	//  and not as a boolean.  The helper is now just a macro "#define cmp -" to negate.
 
-	void addBoolean(char *arg)
+	void addBoolean(const char *arg)
 	{
 		string op = (arg[0] == '-') ? arg + 1 : arg;
 		size_t dotspot = op.find('.');
@@ -2788,7 +2798,7 @@ public:
 		}
 	}
 
-	bool isBoolean(char *arg)
+	bool isBoolean(const char *arg)
 	{
 		if (mBooleanRegisters.empty())
 			return false;
@@ -2814,7 +2824,7 @@ public:
 		return false;
 	}
 
-	void removeBoolean(char *arg)
+	void removeBoolean(const char *arg)
 	{
 		if (mBooleanRegisters.empty())
 			return;
@@ -2835,7 +2845,7 @@ public:
 	}
 
 
-	char *fixImm(char *op, Operand &o)
+	static char *fixImm(char *op, Operand &o)
 	{
 		// Check old value.
 		if (o.eType == OPERAND_TYPE_IMMEDIATE32)
@@ -2864,7 +2874,7 @@ public:
 		// float4 stereoScreenRes = StereoParams.Load(int3(2,0,0));\n  float4 stereoTune = StereoParams.Load(int3(1,0,0));";
 
 		// Vertex shader patches
-		if (!mShaderType.substr(0, 3).compare("vs_"))
+		if (mShaderType.substr(0, 3) == "vs_")
 		{
 			bool isMono = false;
 			bool screenToWorldMatrix1 = false, screenToWorldMatrix2 = false;
@@ -2951,7 +2961,7 @@ public:
 					for (map<string, string>::iterator i = mOutputRegisterValues.begin(); i != mOutputRegisterValues.end(); ++i)
 					{
 						// Ignore main output register
-						if (!i->first.compare(mSV_Position)) continue;
+						if (i->first == mSV_Position) continue;
 						// Check for float 4 type.
 						map<string, DataType>::iterator dataType = mOutputRegisterType.find(i->first);
 						if (dataType == mOutputRegisterType.end() || dataType->second != DT_float4)
@@ -2959,7 +2969,7 @@ public:
 						dotPos = i->second.rfind('.');
 						string rvalue2 = i->second;
 						if (dotPos > 0) rvalue2 = i->second.substr(0, dotPos);
-						if (!rvalue2.compare(rvalue))
+						if (rvalue2 == rvalue)
 						{
 							// Write params before return;.
 							if (!stereoParamsWritten)
@@ -2995,7 +3005,7 @@ public:
 		}
 
 		// Pixel shader patches.
-		if (!mShaderType.substr(0, 3).compare("ps_"))
+		if (mShaderType.substr(0, 3) == "ps_")
 		{
 			// Search for depth texture.
 			bool wposAvailable = false;
@@ -3028,7 +3038,7 @@ public:
 						char *endPos = strchr(pos, ',') + 2;
 						bool constantDeclaration = endPos[0] == 'v' && endPos[1] >= '0' && endPos[1] <= '9';
 						endPos = strchr(endPos, '\n');
-						while (*--endPos != ')'); ++endPos; pos += 3;
+						while (*--endPos != ')') {}; ++endPos; pos += 3;
 						string depthBufferStatement(pos, endPos);
 						searchPos = endPos - mOutput.data();
 						char buf[512];
@@ -3050,7 +3060,7 @@ public:
 						{
 							// Copy depth texture usage to top.
 							//mCodeStartPos = mOutput.insert(mOutput.begin() + mCodeStartPos, buf, buf + strlen(buf)) - mOutput.begin();
-							vector<char>::iterator iter = mOutput.insert(mOutput.begin() + mCodeStartPos, buf, buf + strlen(buf));
+							vector<char>::iterator iter = mOutput.insert(mOutput.begin() + (ptrdiff_t)mCodeStartPos, buf, buf + strlen(buf));
 							mCodeStartPos = iter - mOutput.begin();
 							mCodeStartPos += strlen(buf);
 						}
@@ -3068,7 +3078,7 @@ public:
 							while (*pos != '\n') --pos;
 							mOutput.insert(mOutput.begin() + (pos + 1 - mOutput.data()), buf, buf + strlen(buf));
 						}
-						searchPos += strlen(buf);
+						searchPos += (ptrdiff_t)strlen(buf);
 						wposAvailable = true;
 						pos = strstr(mOutput.data() + searchPos, op1);
 					}
@@ -3104,7 +3114,7 @@ public:
 							char *endPos = strchr(pos, ',') + 2;
 							bool constantDeclaration = endPos[0] == 'v' && endPos[1] >= '0' && endPos[1] <= '9';
 							endPos = strchr(endPos, '\n');
-							while (*--endPos != ')'); ++endPos; pos += 3;
+							while (*--endPos != ')') {}; ++endPos; pos += 3;
 							string depthBufferStatement(pos, endPos);
 							vector<char>::iterator wpos = mOutput.begin();
 							wpos = mOutput.erase(wpos + (pos - mOutput.data()), wpos + (endPos - mOutput.data()));
@@ -3132,7 +3142,7 @@ public:
 							{
 								// Copy depth texture usage to top.
 								//mCodeStartPos = mOutput.insert(mOutput.begin() + mCodeStartPos, buf, buf + strlen(buf)) - mOutput.begin();
-								vector<char>::iterator iter = mOutput.insert(mOutput.begin() + mCodeStartPos, buf, buf + strlen(buf));
+								vector<char>::iterator iter = mOutput.insert(mOutput.begin() + (ptrdiff_t)mCodeStartPos, buf, buf + strlen(buf));
 								mCodeStartPos = iter - mOutput.begin();
 								mCodeStartPos += strlen(buf);
 							}
@@ -3200,7 +3210,7 @@ public:
 					"float wpos = 1.0 / zpos;\n";
 				// Copy depth texture usage to top.
 				//mCodeStartPos = mOutput.insert(mOutput.begin() + mCodeStartPos, INJECT_HEADER, INJECT_HEADER + strlen(INJECT_HEADER)) - mOutput.begin();
-				vector<char>::iterator iter = mOutput.insert(mOutput.begin() + mCodeStartPos, INJECT_HEADER, INJECT_HEADER + strlen(INJECT_HEADER));
+				vector<char>::iterator iter = mOutput.insert(mOutput.begin() + (ptrdiff_t)mCodeStartPos, INJECT_HEADER, INJECT_HEADER + strlen(INJECT_HEADER));
 				mCodeStartPos = iter - mOutput.begin();
 				mCodeStartPos += strlen(INJECT_HEADER);
 
@@ -3253,7 +3263,7 @@ public:
 					{
 						if (mOutput[mCodeStartPos] != '\n') --mCodeStartPos;
 						//mCodeStartPos = mOutput.insert(mOutput.begin() + mCodeStartPos, StereoDecl, StereoDecl + strlen(StereoDecl)) - mOutput.begin();
-						vector<char>::iterator iter = mOutput.insert(mOutput.begin() + mCodeStartPos, StereoDecl, StereoDecl + strlen(StereoDecl));
+						vector<char>::iterator iter = mOutput.insert(mOutput.begin() + (ptrdiff_t)mCodeStartPos, StereoDecl, StereoDecl + strlen(StereoDecl));
 						mCodeStartPos = iter - mOutput.begin();
 						mCodeStartPos += strlen(StereoDecl);
 						stereoParamsWritten = true;
@@ -3275,7 +3285,7 @@ public:
 								while (*bpos != ' ' && *bpos != ';') ++bpos;
 								string regName(mpos + 2, bpos);
 								size_t dotPos = regName.rfind('.');
-								if (dotPos >= 0) regName = regName.substr(0, dotPos + 2);
+								if (dotPos != std::string::npos) regName = regName.substr(0, dotPos + 2);
 								while (*mpos != '\n') --mpos;
 								sprintf(buf, "\n%s -= separation * (wpos - convergence);", regName.c_str());
 								mOutput.insert(mOutput.begin() + (mpos - mOutput.data()), buf, buf + strlen(buf));
@@ -3291,7 +3301,7 @@ public:
 									while (*bpos != ' ' && *bpos != ',' && *bpos != ';') ++bpos;
 									string regName(mpos + 1, bpos);
 									size_t dotPos = regName.rfind('.');
-									if (dotPos >= 0) regName = regName.substr(0, dotPos + 2);
+									if (dotPos != std::string::npos) regName = regName.substr(0, dotPos + 2);
 									while (*mpos != '\n') --mpos;
 									sprintf(buf, "\n%s -= separation * (wpos - convergence);", regName.c_str());
 									mOutput.insert(mOutput.begin() + (mpos - mOutput.data()), buf, buf + strlen(buf));
@@ -3471,7 +3481,7 @@ public:
 	// This is grim, because we add the '4' to the format by default, as we
 	// cannot determine the actual size of a declaration without reflection data.
 	// It will mostly work, but generate hand-fix errors at times.
-	void CreateRawFormat(string texType, int bufIndex)
+	void CreateRawFormat(const string& texType, int bufIndex)
 	{
 		char buffer[128];
 		char format[16];
@@ -3596,6 +3606,7 @@ public:
 							case 16: return "_m01"; case 20: return "_m11"; case 24: return "_m21"; case 28: return "_m31";
 							case 32: return "_m02"; case 36: return "_m12"; case 40: return "_m22"; case 44: return "_m32";
 							case 48: return "_m03"; case 52: return "_m13"; case 56: return "_m23"; case 60: return "_m33";
+							default: break;
 						}
 						return "_m??";
 					case 3:
@@ -3604,6 +3615,7 @@ public:
 							case 12: return "_m01"; case 16: return "_m11"; case 20: return "_m21";
 							case 24: return "_m02"; case 28: return "_m12"; case 32: return "_m22";
 							case 36: return "_m03"; case 40: return "_m13"; case 44: return "_m23";
+							default: break;
 						}
 						return "_m??";
 					case 2:
@@ -3612,6 +3624,7 @@ public:
 							case  8: return "_m01"; case 12: return "_m11";
 							case 16: return "_m02"; case 20: return "_m12";
 							case 24: return "_m03"; case 28: return "_m13";
+							default: break;
 						}
 						return "_m??";
 					case 1:
@@ -3620,10 +3633,13 @@ public:
 							case  4: return "_m01";
 							case  8: return "_m02";
 							case 12: return "_m03";
+							default: break;
 						}
 						return "_m0?";
+					default: break;
 				}
 			break;
+			default: break;
 		}
 
 		return "";
@@ -3636,7 +3652,7 @@ public:
 		uint32_t index;
 		const char *swiz;
 
-		if (!var || !var->Name.compare("$Element"))
+		if (!var || var->Name == "$Element")
 			return "";
 
 		if (var->ParentCount) {
@@ -3655,7 +3671,7 @@ public:
 		}
 
 		if (offset - var->Offset < var_size) {
-			swiz = shadervar_offset2swiz(var, (offset - var->Offset) % elem_size);
+			swiz = shadervar_offset2swiz(var, (int)((offset - var->Offset) % elem_size));
 			if (swiz[0])
 				ret += "." + std::string(swiz);
 		}
@@ -3765,7 +3781,7 @@ public:
 							(dst0.ui32CompMask & 0x8 ? offset2swiz(struct_type, swiz_offsets[3]) : ""));
 				} else {
 					// Dynamic offset, use [] syntax:
-					if (strcmp(strchr(reg, '.'), ".x")) {
+					if (strcmp(strchr(reg, '.'), ".x") != 0) {
 						sprintf(buffer, "// Unexpected swizzle used with dynamic offset (needs manual fix):\n");
 						appendOutput(buffer);
 						ASMLineOut(c, pos, size);
@@ -3801,7 +3817,7 @@ public:
 				// The swizzle is a bit more complicated than the mask here,
 				// because it represents extra 32bit offsets in the structure,
 				// which is one whole index in the "val" array in our fake type.
-				char *swiz_offset = "";
+				const char *swiz_offset = "";
 				switch (swiz_offsets[component]) {
 					case  0: break;
 					case  4: swiz_offset = "+1"; break;
@@ -3936,6 +3952,7 @@ public:
 						case 1: applySwizzle(".y", op5); break;
 						case 2: applySwizzle(".z", op5); break;
 						case 3: applySwizzle(".w", op5); break;
+						default: break;
 					}
 
 					sprintf(buffer, "  %s = %s;\n", translated[component].c_str(), ci(op5).c_str());
@@ -3947,14 +3964,14 @@ public:
 
 	//dx9
 	//get component from Instruction
-	string GetComponentStrFromInstruction(Instruction * instr, int opIndex)
+	static string GetComponentStrFromInstruction(Instruction * instr, int opIndex)
 	{
 		assert(instr != NULL);
-		char * componentX = "x";
-		char * componentY = "y";
-		char * componentZ = "z";
-		char * componentW = "w";
-		char * component[] = { componentX, componentY, componentZ, componentW };
+		const char * componentX = "x";
+		const char * componentY = "y";
+		const char * componentZ = "z";
+		const char * componentW = "w";
+		const char * component[] = { componentX, componentY, componentZ, componentW };
 
 
 		char buff[opcodeSize];
@@ -3990,7 +4007,7 @@ public:
 				sprintf_s(buff, opcodeSize, "%s%s", buff, component[instr->asOperands[opIndex].aui32Swizzle[i]]);
 			}
 		}
-		else if ((instr->asOperands[opIndex].eSelMode == OPERAND_4_COMPONENT_SELECT_1_MODE))
+		else if (instr->asOperands[opIndex].eSelMode == OPERAND_4_COMPONENT_SELECT_1_MODE)
 		{
 			sprintf_s(buff, opcodeSize, "%s", component[instr->asOperands[opIndex].aui32Swizzle[0]]);
 		}
@@ -4516,7 +4533,8 @@ public:
 				if (!strcmp(op1, "vCoverage"))
 				{
 					char *pos = strstr(mOutput.data(), "void main(");
-					while (*pos != 0x0a) pos++; pos++;
+					while (*pos != 0x0a) pos++;
+					pos++;
 					sprintf(buffer, "  uint vCoverage : SV_Coverage,\n");
 					mOutput.insert(mOutput.begin() + (pos - mOutput.data()), buffer, buffer + strlen(buffer));
 				}
@@ -4550,7 +4568,7 @@ public:
 				size_t offset = main_ptr - mOutput.data();
 				NextLine(mOutput.data(), offset, mOutput.size());
 				sprintf(buffer, "  inout TriangleStream<float> m0,\n");
-				mOutput.insert(mOutput.begin() + offset , buffer, buffer + strlen(buffer));
+				mOutput.insert(mOutput.begin() + (ptrdiff_t)offset , buffer, buffer + strlen(buffer));
 			}
 			// For Geometry Shaders, e.g. dcl_maxout n
 			else if (!strcmp(statement, "dcl_maxout"))
@@ -4558,18 +4576,18 @@ public:
 				char *main_ptr = strstr(mOutput.data(), "void main(");
 				size_t offset = main_ptr - mOutput.data();
 				sprintf(buffer, "[maxvertexcount(%s)]\n", op1);
-				mOutput.insert(mOutput.begin() + offset, buffer, buffer + strlen(buffer));
+				mOutput.insert(mOutput.begin() + (ptrdiff_t)offset, buffer, buffer + strlen(buffer));
 			}
 			else if (!strncmp(statement, "dcl_", 4))
 			{
 				// Hateful strcmp logic is upside down, only output for ones we aren't already handling.
-				if (strcmp(statement, "dcl_output") && 
-					strcmp(statement, "dcl_output_siv") &&
-					strcmp(statement, "dcl_globalFlags") &&
+				if (strcmp(statement, "dcl_output") != 0 && 
+					strcmp(statement, "dcl_output_siv") != 0 &&
+					strcmp(statement, "dcl_globalFlags") != 0 &&
 					//strcmp(statement, "dcl_input_siv") && 
-					strcmp(statement, "dcl_input_ps") && 
-					strcmp(statement, "dcl_input_ps_sgv") &&
-					strcmp(statement, "dcl_input_ps_siv"))
+					strcmp(statement, "dcl_input_ps") != 0 && 
+					strcmp(statement, "dcl_input_ps_sgv") != 0 &&
+					strcmp(statement, "dcl_input_ps_siv") != 0)
 				{
 					// Other declarations, unforeseen.
 					sprintf(buffer, "// Needs manual fix for instruction:\n");
@@ -4771,7 +4789,7 @@ public:
 						// Let's make sure we are actually parsing an 'add' before
 						// we go any further. Only check first three characters
 						// since we still want add_sat to parse.
-						if (strncmp(statement, "add", 3)) {
+						if (strncmp(statement, "add", 3) != 0) {
 							logDecompileError("No opcode: " + string(statement));
 							return;
 						}
@@ -5027,7 +5045,8 @@ public:
 								//read next instruction
 								for (int i = 0; i < lookahead; i++)
 								{
-									while (c[pos] != 0x0a && pos < size) pos++; pos++;
+									while (c[pos] != 0x0a && pos < size) pos++;
+									pos++;
 
 									if (ReadStatement(c + pos) < 1)
 									{
@@ -5050,7 +5069,8 @@ public:
 
 								appendOutput(buffer);
 
-								while (c[pos] != 0x0a && pos < size) pos++; pos++;
+								while (c[pos] != 0x0a && pos < size) pos++;
+								pos++;
 								mLastStatement = nextIns[5];
 								iNr += lookahead + 1;
 								continue;
@@ -5333,7 +5353,8 @@ public:
 								//read next instruction
 								for (int i = 0; i < lookahead; i++)
 								{
-									while (c[pos] != 0x0a && pos < size) pos++; pos++;
+									while (c[pos] != 0x0a && pos < size) pos++;
+									pos++;
 
 									if (ReadStatement(c + pos) < 1)
 									{
@@ -5348,7 +5369,8 @@ public:
 								sprintf_s(buffer, opcodeSize, "  %s = lerp(%s, %s, %s);\n", op1, op4, y, op2);
 								appendOutput(buffer);
 
-								while (c[pos] != 0x0a && pos < size) pos++; pos++;
+								while (c[pos] != 0x0a && pos < size) pos++;
+								pos++;
 								mLastStatement = nextIns;
 								iNr += lookahead + 1;
 								continue;
@@ -5461,7 +5483,8 @@ public:
 								//read next instruction
 								for (int i = 0; i < lookahead; i++)
 								{
-									while (c[pos] != 0x0a && pos < size) pos++; pos++;
+									while (c[pos] != 0x0a && pos < size) pos++;
+									pos++;
 
 									if (ReadStatement(c + pos) < 1)
 									{
@@ -5480,7 +5503,8 @@ public:
 
 								appendOutput(buffer);
 
-								while (c[pos] != 0x0a && pos < size) pos++; pos++;
+								while (c[pos] != 0x0a && pos < size) pos++;
+								pos++;
 								mLastStatement = nextIns[1];
 								iNr += lookahead + 1;
 								continue;
@@ -6410,11 +6434,11 @@ public:
 						Operand constZero = instr->asOperands[1];
 						Operand texture = instr->asOperands[2];
 						RESINFO_RETURN_TYPE returnType = instr->eResInfoReturnType;
-						int texReg = texture.ui32RegisterNumber;
+						int texReg = (int)texture.ui32RegisterNumber;
 						ResourceBinding bindInfo;
 						ResourceBinding *bindInfoPtr = &bindInfo;
 
-						memset(&bindInfo, 0, sizeof(bindInfo));
+						memset((void*)&bindInfo, 0, sizeof(bindInfo));
 						int bindstate = GetResourceFromBindingPoint(RGROUP_TEXTURE, texReg, shader->sInfo, &bindInfoPtr);
 						bool bindStripped = (bindstate == 0);
 
@@ -6675,7 +6699,7 @@ public:
 			WritePatches();
 	}
 
-	void ParseCodeOnlyShaderType(Shader *shader, const char *c, size_t size)
+	void ParseCodeOnlyShaderType(Shader * /*shader*/, const char *c, size_t size)
 	{
 		mOutputRegisterValues.clear();
 		mBooleanRegisters.clear();
@@ -6769,7 +6793,7 @@ public:
 	}
 };
 
-const string DecompileBinaryHLSL(ParseParameters &params, bool &patched, std::string &shaderModel, bool &errorOccurred)
+string DecompileBinaryHLSL(ParseParameters &params, bool &patched, std::string &shaderModel, bool &errorOccurred)
 {
 	Decompiler d;
 

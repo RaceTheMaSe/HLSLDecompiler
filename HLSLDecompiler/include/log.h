@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdarg>
 #include <string>
 #include <ctime>
 
@@ -14,21 +15,17 @@ extern bool gLogDebug;
 // probably not worth doing so unless we were switching to use a central
 // logging framework.
 
-#define LogInfo(fmt, ...) \
-    do { if (LogFile) fprintf(LogFile, fmt, __VA_ARGS__); } while (0)
-#define vLogInfo(fmt, va_args) \
-    do { if (LogFile) vfprintf(LogFile, fmt, va_args); } while (0)
-#define LogInfoW(fmt, ...) \
-    do { if (LogFile) fwprintf(LogFile, fmt, __VA_ARGS__); } while (0)
+inline void LogInfo(const char* fmt, ...)
+    { if (LogFile) { va_list va; va_start(va, fmt); vfprintf(LogFile, fmt, va); } }
+inline void LogInfoW(const wchar_t* fmt, ...)
+    { if (LogFile) { va_list va; va_start(va, fmt); vfwprintf(LogFile, fmt, va); } }
 
-#define LogDebug(fmt, ...) \
-    do { if (gLogDebug) LogInfo(fmt, __VA_ARGS__); } while (0)
-#define vLogDebug(fmt, va_args) \
-    do { if (gLogDebug) vLogInfo(fmt, va_args); } while (0)
-#define LogDebugW(fmt, ...) \
-    do { if (gLogDebug) LogInfoW(fmt, __VA_ARGS__); } while (0)
+inline void LogDebug(const char* fmt, ...)
+    { if (gLogDebug) { va_list va; va_start(va, fmt); LogInfo(fmt, va); } }
+inline void LogDebugW(const wchar_t* fmt, ...)
+    { if (gLogDebug) { va_list va; va_start(va, fmt); LogInfoW(fmt, va); } }
 
-static std::string LogTime()
+inline std::string LogTime()
 {
     char c_time[64];
     tm current_time = {};

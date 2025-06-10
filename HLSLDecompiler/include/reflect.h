@@ -4,15 +4,15 @@
 
 ResourceGroup ResourceTypeToResourceGroup(ResourceType);
 
-int GetResourceFromBindingPoint(const ResourceGroup eGroup, const uint32_t ui32BindPoint, const ShaderInfo* psShaderInfo, ResourceBinding** ppsOutBinding);
+int GetResourceFromBindingPoint(ResourceGroup eGroup, uint32_t ui32BindPoint, const ShaderInfo* psShaderInfo, ResourceBinding** ppsOutBinding);
 
-void GetConstantBufferFromBindingPoint(const ResourceGroup eGroup, const uint32_t ui32BindPoint, const ShaderInfo* psShaderInfo, ConstantBuffer** ppsConstBuf);
+void GetConstantBufferFromBindingPoint(ResourceGroup eGroup, uint32_t ui32BindPoint, const ShaderInfo* psShaderInfo, ConstantBuffer** ppsConstBuf);
 
 int GetInterfaceVarFromOffset(uint32_t ui32Offset, ShaderInfo* psShaderInfo, ShaderVar** ppsShaderVar);
 
 uint32_t ShaderVarSize(ShaderVarType* psType, uint32_t* singularSize);
 
-int GetShaderVarFromOffset(const uint32_t ui32Vec4Offset,
+int GetShaderVarFromOffset(uint32_t ui32Vec4Offset,
 						   const uint32_t* pui32Swizzle,
 						   ConstantBuffer* psCBuf,
 						   ShaderVarType** ppsShaderVar,
@@ -31,8 +31,8 @@ typedef struct
 	uint32_t* pui32PatchConstants;
 } ReflectionChunks;
 
-void LoadShaderInfo(const uint32_t ui32MajorVersion,
-    const uint32_t ui32MinorVersion,
+void LoadShaderInfo(uint32_t ui32MajorVersion,
+    uint32_t ui32MinorVersion,
     const ReflectionChunks* psChunks,
     ShaderInfo* psInfo);
 

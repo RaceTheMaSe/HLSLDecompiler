@@ -1,6 +1,6 @@
 #include "reflect.h"
 #include "debug.h"
-#include "decode.h"
+#include "tokens.h"
 #include <cstdlib>
 #include <string>
 
@@ -30,6 +30,8 @@ static void ReadInputSignatures(const uint32_t* pui32Tokens,
     const uint32_t* pui32FirstSignatureToken = pui32Tokens;
     const uint32_t ui32ElementCount = *pui32Tokens++;
     const uint32_t ui32Key = *pui32Tokens++;
+
+	(void)ui32Key; // unused variable
 
     psSignatures = new InOutSignature[ui32ElementCount];
     psShaderInfo->psInputSignatures = psSignatures;
@@ -77,6 +79,8 @@ static void ReadOutputSignatures(const uint32_t* pui32Tokens,
     const uint32_t ui32ElementCount = *pui32Tokens++;
     const uint32_t ui32Key = *pui32Tokens++;
 
+	(void)ui32Key; // unused variable
+
     psSignatures = new InOutSignature[ui32ElementCount];
     psShaderInfo->psOutputSignatures = psSignatures;
     psShaderInfo->ui32NumOutputSignatures = ui32ElementCount;
@@ -122,6 +126,8 @@ static void ReadPatchConstantSignatures(const uint32_t* pui32Tokens,
     const uint32_t* pui32FirstSignatureToken = pui32Tokens;
     const uint32_t ui32ElementCount = *pui32Tokens++;
     const uint32_t ui32Key = *pui32Tokens++;
+
+	(void)ui32Key; // unused variable
 
     psSignatures = new InOutSignature[ui32ElementCount];
     psShaderInfo->psPatchConstantSignatures = psSignatures;
@@ -268,6 +274,8 @@ static const uint32_t* ReadConstantBuffer(ShaderInfo* psShaderInfo,
         ui32Flags = *pui32VarToken++;
         ui32TypeOffset = *pui32VarToken++;
 
+		(void)ui32Flags; // set but not used
+
 		psVar->sType.Name = psVar->Name;
 		psVar->sType.FullName = psVar->Name;
 		psVar->sType.Parent = 0;
@@ -286,6 +294,11 @@ static const uint32_t* ReadConstantBuffer(ShaderInfo* psShaderInfo,
 			uint32_t TextureSize = *pui32VarToken++;
 			uint32_t StartSampler = *pui32VarToken++;
 			uint32_t SamplerSize = *pui32VarToken++;
+
+			(void)StartTexture; // unused variable
+			(void)TextureSize; // unused variable
+			(void)StartSampler; // unused variable
+			(void)SamplerSize; // unused variable
 		}
 
 		psVar->haveDefaultValue = false;
@@ -317,6 +330,9 @@ static const uint32_t* ReadConstantBuffer(ShaderInfo* psShaderInfo,
         psBuffer->ui32TotalSizeInBytes = *pui32Tokens++;
         ui32Flags = *pui32Tokens++;
         ui32BufferType = *pui32Tokens++;
+
+		(void)ui32Flags; // set but not used
+		(void)ui32BufferType; // set but not used
     }
 
 	psBuffer->iUnsized = 0;
@@ -341,6 +357,9 @@ static void ReadResources(const uint32_t* pui32Tokens,//in
     uint32_t ui32ResourceBindingOffset = *pui32Tokens++;
     uint32_t ui32ShaderModel = *pui32Tokens++;
     uint32_t ui32CompileFlags = *pui32Tokens++;//D3DCompile flags? http://msdn.microsoft.com/en-us/library/gg615083(v=vs.85).aspx
+
+	(void)ui32ShaderModel; // unused variable
+	(void)ui32CompileFlags; // unused variable
 
     //Resources
     pui32ResourceBindings = (const uint32_t*)((const char*)pui32FirstToken + ui32ResourceBindingOffset);
@@ -385,7 +404,7 @@ static void ReadResources(const uint32_t* pui32Tokens,//in
 			{
 				if(psConstantBuffers[cbufIndex].Name == psResBindings[i].Name)
 				{
-					psShaderInfo->aui32ResourceMap[eRGroup][psResBindings[i].ui32BindPoint] = cbufIndex;
+					psShaderInfo->aui32ResourceMap[eRGroup][(int)psResBindings[i].ui32BindPoint] = cbufIndex;
 				}
 			}
 		}
@@ -445,6 +464,8 @@ static void ReadInterfaces(const uint32_t* pui32Tokens,
 
     const uint32_t* pui32InterfaceSlotTokens = pui32InterfaceSlots;
 
+	(void)ui32InterfaceSlotCount; // unused variable
+
     ClassType* psClassTypes;
     ClassInstance* psClassInstances;
 
@@ -463,6 +484,7 @@ static void ReadInterfaces(const uint32_t* pui32Tokens,
 
     //Slots map function table to $ThisPointer cbuffer variable index
     ui32StartSlot = 0;
+	(void)ui32StartSlot; // set but not used
     for(i=0; i<ui32InterfaceSlotRecordCount;++i)
     {
         uint32_t k;
@@ -477,7 +499,7 @@ static void ReadInterfaces(const uint32_t* pui32Tokens,
 
         for(k=0; k < ui32Count; ++k)
         {
-            psShaderInfo->aui32TableIDToTypeID[*pui32TableID++] = *pui16TypeID++;
+            psShaderInfo->aui32TableIDToTypeID[(int)*pui32TableID++] = *pui16TypeID++;
         }
 
         ui32StartSlot += ui32SlotSpan;
@@ -494,7 +516,7 @@ void GetConstantBufferFromBindingPoint(const ResourceGroup eGroup, const uint32_
 {
 	if(psShaderInfo->ui32MajorVersion > 3)
 	{
-		*ppsConstBuf = psShaderInfo->psConstantBuffers + psShaderInfo->aui32ResourceMap[eGroup].at(ui32BindPoint);
+		*ppsConstBuf = psShaderInfo->psConstantBuffers + psShaderInfo->aui32ResourceMap[eGroup].at((int)ui32BindPoint);
 	}
 	else
 	{
@@ -607,12 +629,12 @@ static int IsOffsetInType(ShaderVarType* psType,
             psType->Class == SVC_MATRIX_COLUMNS)
         {
 			//Matrices are treated as arrays of vectors.
-			pi32Index[0] = (offsetToFind - thisOffset) / 16;
+			pi32Index[0] = (int32_t)(offsetToFind - thisOffset) / 16;
         }
 		//Check for array of scalars or vectors (both take up 16 bytes per element)
 		else if ((psType->Class == SVC_SCALAR || psType->Class == SVC_VECTOR) && psType->Elements > 1)
 		{
-			pi32Index[0] = (offsetToFind - thisOffset) / 16;
+			pi32Index[0] = (int32_t)(offsetToFind - thisOffset) / 16;
 		}
 		else if(psType->Class == SVC_VECTOR && psType->Columns > 1)
 		{
@@ -631,7 +653,7 @@ static int IsOffsetInType(ShaderVarType* psType,
 
 			//Rebase angle2 so that .y maps to .x, .z maps to .y
 
-			pi32Rebase[0] = thisOffset % 16;
+			pi32Rebase[0] = (int32_t)thisOffset % 16;
 		}
 
 		return 1;
@@ -827,10 +849,10 @@ void LoadShaderInfo(const uint32_t ui32MajorVersion,
         ReadOutputSignatures(pui32Outputs, psInfo, 0, 0);
     if(pui32Outputs11)
         ReadOutputSignatures(pui32Outputs11, psInfo, 1, 1);
-	if(pui32OutputsWithStreams)
-		ReadOutputSignatures(pui32OutputsWithStreams, psInfo, 0, 1);
-	if(pui32PatchConstants)
-		ReadPatchConstantSignatures(pui32PatchConstants, psInfo, 0, 0);
+    if(pui32OutputsWithStreams)
+        ReadOutputSignatures(pui32OutputsWithStreams, psInfo, 0, 1);
+    if(pui32PatchConstants)
+        ReadPatchConstantSignatures(pui32PatchConstants, psInfo, 0, 0);
 
     {
         uint32_t i;
@@ -838,7 +860,7 @@ void LoadShaderInfo(const uint32_t ui32MajorVersion,
         {
             std::string cbufName = psInfo->psConstantBuffers[i].Name;
             std::string cbufThisPointer = "$ThisPointer";
-            if(cbufName.compare(cbufThisPointer) == 0)
+            if(cbufName == cbufThisPointer)
             {
                 psInfo->psThisPointerConstBuffer = &psInfo->psConstantBuffers[i];
             }
@@ -1090,7 +1112,7 @@ void LoadD3D9ConstantTable(const char* data,
 				res->eDimension = REFLECT_RESOURCE_DIMENSION_TEXTURE2D;
 				break;
 			case PT_SAMPLER3D:
-				res->eDimension = REFLECT_RESOURCE_DIMENSION_TEXTURE2D;
+				res->eDimension = REFLECT_RESOURCE_DIMENSION_TEXTURE3D;
 				break;
 			case PT_SAMPLERCUBE:
 				res->eDimension = REFLECT_RESOURCE_DIMENSION_TEXTURECUBE;
